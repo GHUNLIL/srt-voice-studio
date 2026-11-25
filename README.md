@@ -4,7 +4,9 @@
 
 公开站点使用 Cloudflare Pages。默认引擎在浏览器内合成。选择微软 Azure 后可填写自己的 Speech 资源区域和密钥；选择兼容语音接口后可填写完整 HTTPS 地址、模型名、音色和密钥。密钥与字幕直接发送到所选服务，服务须允许浏览器跨域调用。刷新页面后需重新填写密钥。
 
-更新 Pages 站点时运行 `node worker/build.mjs`，将生成的 `public/` 内容上传到 Cloudflare Pages 的 `unlil-srt` 项目。历史记录和 WAV 保存在使用者的浏览器内。
+ChatGPT 模式会将访客填写的 Sub2API 密钥和字幕经同域接口转发至 sub2api.unlil.com 的 /v1/chat/completions。所选分组需要能返回音频的模型，默认 gpt-audio 和 alloy。
+
+更新 Pages 站点时运行 `node worker/build-pages.mjs`，将生成的 `public/` 内容上传到 Cloudflare Pages 的 `unlil-srt` 项目。历史记录和 WAV 保存在使用者的浏览器内。
 
 ## 可选的站点共享微软音色
 

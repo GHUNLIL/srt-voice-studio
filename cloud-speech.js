@@ -21,7 +21,8 @@ function updateProvider() {
   const microsoft = mode === 'azure' || mode === 'azure-key';
   byId('azureFields').hidden = mode !== 'azure-key';
   byId('customFields').hidden = mode !== 'compatible';
-  voiceList.hidden = mode === 'compatible';
+  byId('sub2Fields').hidden = mode !== 'sub2api';
+  voiceList.hidden = mode === 'compatible' || mode === 'sub2api';
   document.querySelector('label[for="voiceSelect"]').hidden = voiceList.hidden;
   for (const [i, option] of Array.from(voiceList.options).entries()) {
     const name = microsoftVoices.get(option.value).split('-')[2].replace('Neural','');
@@ -33,6 +34,7 @@ function updateProvider() {
     local:'字幕和配音均在浏览器内处理。',
     azure:'字幕正文将通过站点后端发送至微软合成。',
     'azure-key':'每段字幕和密钥直接发送给微软。密钥仅用于本页，刷新后需重新填写。',
+    sub2api:'已连接目标网关 sub2api.unlil.com。本站转发字幕和密钥，按你的 Sub2API 分组计费。模型须支持聊天音频输出。',
     compatible:'每段字幕和密钥将直接发送到下方地址。请填写你信任且支持浏览器跨域请求的语音接口，费用计入该密钥所属账户。'
   };
   byId('engineNote').textContent = notes[mode];
@@ -49,6 +51,11 @@ function providerSettings() {
     if (!/^[a-z][a-z0-9]{1,40}$/.test(region) || !value('azureKey'))
       throw new Error('请填写 Azure 区域短名和 Speech 资源密钥。');
     return {engine:mode, url:'https://' + region + '.tts.speech.microsoft.com/cognitiveservices/v1', key:value('azureKey')};
+  }
+  if (mode === 'sub2api') {
+    const key = value('sub2Key'), model = value('sub2Model'), voiceId = value('sub2Voice');
+    if (!key || !model || !voiceId) throw new Error('请填写 Sub2API 密钥、音频模型和音色。');
+    return {engine:mode,key,model,voiceId,url:'/api/sub2api/speech'};
   }
   if (mode === 'compatible') {
     let url;
@@ -84,6 +91,10 @@ async function providerSamples(text, settings, signal, report) {
     throw new Error('无法连接语音接口，请检查地址、网络和服务端跨域设置。');
   }
   if (!response.ok) {
+    if (settings.engine === 'sub2api') {
+      const failure = await response.json().catch(() => ({}));
+      throw new Error(failure.error || 'Sub2API 配音请求失败。');
+    }
     const hints = {400:'请检查模型、音色和字幕内容。',401:'请检查密钥及资源区域。',403:'请检查密钥权限及资源区域。',404:'请检查接口地址和模型名称。',429:'请检查配额，或稍后重试。'};
     throw new Error('语音接口返回 HTTP '+response.status+'。'+(hints[response.status] || '请检查服务状态。'));
   }
@@ -98,7 +109,8 @@ async function providerSamples(text, settings, signal, report) {
   source.connect(render.destination);
   source.start();
   const mono = (await render.startRendering()).getChannelData(0);
-  return Int16Array.from(mono, sample => Math.round(Math.min(1,Math.max(-1,sample))*32767));
+  const samples = Int16Array.from(mono, sample => Math.round(Math.min(1,Math.max(-1,sample))*32767));
+  return settings.engine === 'sub2api' && settings.rate ? fitDuration(samples,Math.max(1,Math.round(samples.length/(1+settings.rate/100)))) : samples;
 }
 
 async function discoverCloudSpeech() {

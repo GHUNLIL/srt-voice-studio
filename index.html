@@ -68,11 +68,16 @@ button.main-btn:disabled { background: #a0cfff; cursor: not-allowed; }
         </div>
         <div class="form-group">
             <label for="engineSelect">配音引擎</label>
-            <select id="engineSelect"><option value="local">浏览器本地语音</option><option value="azure-key">微软 Azure Speech · 自填密钥</option><option value="compatible">兼容语音接口 · 自选模型</option><option value="azure" disabled hidden>微软 Azure Speech · 站点提供</option></select>
+            <select id="engineSelect"><option value="local">浏览器本地语音</option><option value="azure-key">微软 Azure Speech · 自填密钥</option><option value="sub2api">ChatGPT · UNLIL Sub2API</option><option value="compatible">兼容语音接口 · 自选模型</option><option value="azure" disabled hidden>微软 Azure Speech · 站点提供</option></select>
             <p id="engineNote" style="font-size:14px">字幕和配音均在浏览器内处理。</p>
             <div id="azureFields" class="provider-fields" hidden>
               <label for="azureRegion">Azure 资源区域</label><input id="azureRegion" placeholder="例如 japaneast" spellcheck="false">
               <label for="azureKey">Speech 资源密钥</label><input id="azureKey" type="password" autocomplete="off" spellcheck="false">
+            </div>
+            <div id="sub2Fields" class="provider-fields" hidden>
+              <label for="sub2Key">Sub2API 密钥</label><input id="sub2Key" type="password" autocomplete="off" spellcheck="false">
+              <label for="sub2Model">音频模型</label><input id="sub2Model" value="gpt-audio" spellcheck="false">
+              <label for="sub2Voice">音色</label><input id="sub2Voice" value="alloy" spellcheck="false">
             </div>
             <div id="customFields" class="provider-fields" hidden>
               <label for="speechUrl">语音合成接口（完整 HTTPS 地址）</label><input id="speechUrl" type="url" value="https://api.openai.com/v1/audio/speech" spellcheck="false">
@@ -6323,4 +6328,4 @@ may consider it more useful to permit linking proprietary applications with
 the library.  If this is what you want to do, use the GNU Lesser General
 Public License instead of this License.  But first, please read
 <https://www.gnu.org/licenses/why-not-lgpl.html>.
-</script><script src="./cloud-speech.js"></script></body></html>
+</script><script src="./cloud-speech.js?v=sub2api1"></script></body></html>

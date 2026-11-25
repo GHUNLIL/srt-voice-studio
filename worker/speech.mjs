@@ -1,3 +1,5 @@
+import {sub2Speech} from './sub2api.mjs';
+
 const voices = new Set([
   'ja-JP-KeitaNeural', 'ja-JP-NanamiNeural', 'ko-KR-InJoonNeural', 'ko-KR-SunHiNeural',
   'en-US-GuyNeural', 'en-US-JennyNeural', 'de-DE-KillianNeural', 'de-DE-KatjaNeural'
@@ -10,6 +12,7 @@ function escapeXml(text) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    if (url.pathname === '/api/sub2api/speech') return sub2Speech(request);
     if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
     const origin = request.headers.get('Origin');
     const headers = { 'Cache-Control': 'no-store', 'Vary': 'Origin' };
