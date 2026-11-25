@@ -58,3 +58,5 @@ audio {grid-column:1/-1; width:100%; height:34px}
 
 .voice-example {margin-top:12px}
 #sampleText {font-size:13px; color:#555; margin:5px 0 0}
+
+header {display:flex;justify-content:space-between;align-items:center;gap:12px} header a {color:inherit}

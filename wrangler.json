@@ -1,11 +1,31 @@
 {
   "name": "srt-voice-studio",
-  "main": "worker/speech.mjs",
+  "main": "worker/pages.mjs",
   "compatibility_date": "2026-06-01",
   "workers_dev": true,
-  "build": { "command": "node worker/build.mjs" },
-  "assets": { "directory": "./public", "binding": "ASSETS", "run_worker_first": true },
+  "build": {
+    "command": "node worker/build.mjs"
+  },
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": true
+  },
   "ratelimits": [
-    { "name": "SPEECH_LIMIT", "namespace_id": "10401", "simple": { "limit": 20, "period": 60 } }
+    {
+      "name": "SPEECH_LIMIT",
+      "namespace_id": "10401",
+      "simple": {
+        "limit": 20,
+        "period": 60
+      }
+    }
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "srtvoice-accounts",
+      "database_id": "7b020633-47d3-417d-ab22-a66b0b673ace"
+    }
   ]
 }

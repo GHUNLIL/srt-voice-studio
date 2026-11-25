@@ -1,6 +1,3 @@
-import {requireLogin, privateResponse} from './site-access.mjs';
-import {sub2Speech} from './sub2api.mjs';
-
 const voices = new Set([
   'ja-JP-KeitaNeural', 'ja-JP-NanamiNeural', 'ko-KR-InJoonNeural', 'ko-KR-SunHiNeural',
   'en-US-GuyNeural', 'en-US-JennyNeural', 'de-DE-KillianNeural', 'de-DE-KatjaNeural'
@@ -10,24 +7,10 @@ function escapeXml(text) {
   return text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 }
 
-export default {
-  async fetch(request, env) {
-    const denial = await requireLogin(request,env);
-    if (denial) return denial;
-    const url = new URL(request.url);
-    if (url.pathname === '/api/sub2api/speech') return sub2Speech(request,env);
-    if (!url.pathname.startsWith('/api/')) return privateResponse(await env.ASSETS.fetch(request),url.pathname);
-    const origin = request.headers.get('Origin');
-    const headers = { 'Cache-Control': 'no-store', 'Vary': 'Origin' };
-    const fail = (status, error) => Response.json({error}, {status, headers});
-    if (origin && origin !== url.origin && origin !== 'https://ghunlil.github.io')
-      return fail(403, '网站来源未经授权。');
-    if (origin) headers['Access-Control-Allow-Origin'] = origin;
-    headers['Access-Control-Expose-Headers'] = 'Retry-After';
-    if (request.method === 'OPTIONS') {
-      return new Response(null, {status:204, headers:{...headers,
-        'Access-Control-Allow-Methods':'GET, POST, OPTIONS', 'Access-Control-Allow-Headers':'Content-Type'}});
-    }
+export async function azureSpeech(request,env) {
+    const url=new URL(request.url);
+    const headers={'Cache-Control':'no-store'};
+    const fail=(status,error)=>Response.json({error},{status,headers});
     const region = (env.AZURE_SPEECH_REGION || '').trim().toLowerCase();
     const ready = Boolean(/^[a-z][a-z0-9]{1,40}$/.test(region) && env.AZURE_SPEECH_KEY?.trim());
     if (url.pathname === '/api/status' && request.method === 'GET')
@@ -45,7 +28,7 @@ export default {
         !Number.isInteger(data.rate) || data.rate < -50 || data.rate > 100)
       return fail(400, '请检查音色、语速和字幕内容（每条最多 4000 字符）。');
     const ip = request.headers.get('CF-Connecting-IP') || 'local';
-    if (!(await env.SPEECH_LIMIT.limit({key:ip})).success) {
+    if (env.SPEECH_LIMIT && !(await env.SPEECH_LIMIT.limit({key:ip})).success) {
       headers['Retry-After'] = '60';
       return fail(429, '请求较密集，请稍后重试。');
     }
@@ -56,7 +39,7 @@ export default {
       escapeXml(data.text) + '</prosody></voice></speak>';
     try {
       const speech = await fetch('https://' + region + '.tts.speech.microsoft.com/cognitiveservices/v1', {
-        method:'POST', redirect:'error', signal:request.signal, headers:{
+        method:'POST', redirect:'manual', signal:request.signal, headers:{
           'Ocp-Apim-Subscription-Key':env.AZURE_SPEECH_KEY.trim(), 'Content-Type':'application/ssml+xml',
           'X-Microsoft-OutputFormat':'riff-22050hz-16bit-mono-pcm', 'User-Agent':'SrtVoiceStudio'
         }, body:ssml
@@ -70,5 +53,4 @@ export default {
       if ([401,403].includes(speech.status)) return fail(503, '请站点管理员检查 Azure 区域、密钥及资源权限。');
       return fail(502, '微软语音暂时无法生成这段字幕（HTTP ' + speech.status + '）。');
     } catch { return fail(502, '连接微软语音失败，请稍后重试。'); }
-  }
-};
+}

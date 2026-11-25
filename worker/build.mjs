@@ -15,3 +15,5 @@ await rm(new URL('cloud-speech.js',dest),{force:true});
 await rm(new URL('engine/',dest),{recursive:true,force:true});
 await cp(root('engine'),new URL('engine/',dest),{recursive:true});
 await copyFile(root('speech-config.json'),new URL('speech-config.json',dest));
+
+for(const page of ['login.html','account.html']) await copyFile(root(page),new URL(page,dest));

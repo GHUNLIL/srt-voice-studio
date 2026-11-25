@@ -95,7 +95,8 @@ function updateProvider() {
     sub2api:'字幕将通过本站发送至 sub2api.unlil.com，使用站点配额。模型可用性取决于站点分组。',
     compatible:'每段字幕和密钥将直接发送到下方地址。请填写你信任且支持浏览器跨域请求的语音接口，费用计入该密钥所属账户。'
   };
-  byId('engineNote').textContent = notes[mode];
+  const rate = Number(document.documentElement.dataset.rate || 0);
+  byId('engineNote').textContent = notes[mode] + (mode==='sub2api' ? (rate ? ' 每成功合成一段扣 '+rate+' 点（含试听）。' : ' 当前免费。') : '');
   showExample();
 }
 engine.addEventListener('change', updateProvider);

@@ -256,7 +256,7 @@ function notice(text) {
 }
 
 const database = new Promise((resolve, reject) => {
-  const request = indexedDB.open('local-srt-history', 1);
+  const request = indexedDB.open(document.documentElement.dataset.history || 'local-srt-history', 1);
   request.onupgradeneeded = () => request.result.createObjectStore('finished', {keyPath: 'id'});
   request.onsuccess = () => resolve(request.result);
   request.onerror = () => reject(request.error);
