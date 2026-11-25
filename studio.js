@@ -5,13 +5,17 @@ function stopWorker() {
 }
 const localCacheName = 'srt-local-speech';
 const localFiles = ['./engine/espeak-acf4a598457b.js','./engine/voices-ccb1881280f4.bin'];
+const localSizes = [179311, 9129834];
 const downloadButton = document.getElementById('downloadEngine');
 let downloading = false;
 
 async function cachedEngine() {
   if (!window.caches) throw new Error('此浏览器不支持引擎缓存。请使用支持缓存的浏览器，或选择云端配音。');
   const cache = await caches.open(localCacheName);
-  return Promise.all(localFiles.map(file => cache.match(file)));
+  return Promise.all(localFiles.map(async file => {
+    const saved = await cache.match(file);
+    return saved?.headers.get('Content-Type')?.includes('text/html') ? undefined : saved;
+  }));
 }
 
 async function showCacheState() {
@@ -35,7 +39,31 @@ downloadButton.addEventListener('click', async () => {
   notice('');
   try {
     const cache = await caches.open(localCacheName);
-    await cache.addAll(localFiles);
+    const saved = await cachedEngine();
+    const total = localSizes.reduce((sum, size) => sum + size, 0);
+    let loaded = 0;
+    for (const [i,file] of localFiles.entries()) {
+      const size = localSizes[i];
+      if (!saved[i]) {
+        const response = await fetch(file, {redirect:'error'});
+        if (!response.ok || !response.body || response.headers.get('Content-Type')?.includes('text/html'))
+          throw new Error('获取引擎失败');
+        const reader = response.body.getReader();
+        const bytes = new Uint8Array(size);
+        let offset = 0;
+        while (true) {
+          const {value,done} = await reader.read();
+          if (done) break;
+          bytes.set(value,offset);
+          offset += value.length;
+          const mb = ((loaded + offset) / 1e6).toFixed(1);
+          downloadButton.textContent = '正在下载 · ' + mb + ' / ' + (total / 1e6).toFixed(1) + ' MB';
+        }
+        if (offset !== size) throw new Error('引擎文件不完整');
+        await cache.put(file,new Response(bytes));
+      }
+      loaded += size;
+    }
   } catch {
     notice('引擎缓存失败，请检查网络和浏览器存储空间后重试。');
   } finally {
@@ -371,7 +399,14 @@ async function convert(file, task, settings) {
     try { await historyAction('readwrite', store => store.put(record)); }
     catch { notice('浏览器未能保存历史记录，请在关闭页面前下载音频。'); }
   } catch (error) {
-    if (!signal.aborted) finishTask(task, '配音失败 · ' + error.message, 'status-error');
+    if (!signal.aborted) {
+      finishTask(task, '配音失败 · ' + error.message, 'status-error');
+      if (error.offerLocal) {
+        const switchButton = element('button','','切换到本地配音');
+        switchButton.onclick = selectLocalSpeech;
+        task.actions.append(switchButton);
+      }
+    }
   }
 }
 async function startBatchConversion(example = false) {
@@ -392,6 +427,11 @@ async function startBatchConversion(example = false) {
     await restored;
     const settings = {...providerSettings(), voice:byId('voiceSelect').value, stretch:byId('speedModeSelect').selectedIndex === 1,
       rate:+byId('rateSlider').value, pitch:+byId('pitchSlider').value, volume:+byId('volumeSlider').value};
+    if (settings.engine === 'local' && !(await cachedEngine()).every(Boolean)) {
+      notice(downloading ? '引擎下载完成后即可配音。' : '请先下载并缓存本地引擎。');
+      downloadButton.focus();
+      return;
+    }
     const batch = files.map(file => ({file, task:taskRow(file.name)}));
     for (const [i, entry] of batch.entries()) {
       submit.textContent = '正在配音 · ' + (i+1) + ' / ' + files.length;

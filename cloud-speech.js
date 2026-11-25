@@ -16,6 +16,10 @@ for (const [id,label,voice] of chineseVoices) {
   voiceList.add(new Option(label,id));
   originalNames.push(label);
 }
+let lastLocalVoice = 'cmn+f3';
+voiceList.addEventListener('change', () => {
+  if (engine.value === 'local') lastLocalVoice = voiceList.value;
+});
 const chatVoices = 'alloy ash ballad coral echo sage shimmer verse'.split(' ');
 const legacyVoices = 'alloy ash coral echo fable onyx nova sage shimmer'.split(' ');
 const ttsVoices = [...legacyVoices,'ballad','verse','marin','cedar'];
@@ -75,7 +79,11 @@ voiceList.addEventListener('change',showExample);
 function updateProvider() {
   const mode = engine.value;
   byId('localFields').hidden = mode !== 'local';
-  if (mode === 'local') showCacheState();
+  byId('useLocal').hidden = mode !== 'sub2api';
+  if (mode === 'local') {
+    voiceList.value = lastLocalVoice;
+    showCacheState();
+  }
   const microsoft = mode === 'azure' || mode === 'azure-key';
   byId('azureFields').hidden = mode !== 'azure-key';
   byId('customFields').hidden = mode !== 'compatible';
@@ -99,6 +107,12 @@ function updateProvider() {
   byId('engineNote').textContent = notes[mode] + (mode==='sub2api' ? (rate ? ' 每成功合成一段扣 '+rate+' 点（含试听）。' : ' 当前免费。') : '');
   showExample();
 }
+function selectLocalSpeech() {
+  engine.value = 'local';
+  updateProvider();
+  engine.focus();
+}
+byId('useLocal').onclick = selectLocalSpeech;
 engine.addEventListener('change', updateProvider);
 byId('speechUrl').addEventListener('input', () => { byId('customKey').value = ''; });
 updateProvider();
@@ -154,7 +168,9 @@ async function providerSamples(text, settings, signal, report) {
   if (!response.ok) {
     if (settings.engine === 'sub2api') {
       const failure = await response.json().catch(() => ({}));
-      throw new Error(failure.error || 'Sub2API 配音请求失败。');
+      const error = new Error(failure.error || 'Sub2API 配音请求失败。');
+      error.offerLocal = response.status === 503;
+      throw error;
     }
     const hints = {400:'请检查模型、音色和字幕内容。',401:'请检查密钥及资源区域。',403:'请检查密钥权限及资源区域。',404:'请检查接口地址和模型名称。',429:'请检查配额，或稍后重试。'};
     throw new Error('语音接口返回 HTTP '+response.status+'。'+(hints[response.status] || '请检查服务状态。'));
