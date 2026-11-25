@@ -47,6 +47,8 @@ button.main-btn:disabled { background: #a0cfff; cursor: not-allowed; }
   .preset-btn { padding: 6px 10px; }
   .task-actions { min-width: 0; }
 }
+.provider-fields input {box-sizing:border-box;width:100%;padding:10px 12px;margin:0 0 12px;border:1px solid #cbd5df;border-radius:6px;font:inherit;background:white;color:#182433}
+[hidden] {display:none!important}
 </style></head><body>
 <div class="main-content">
     <div class="container">
@@ -66,8 +68,18 @@ button.main-btn:disabled { background: #a0cfff; cursor: not-allowed; }
         </div>
         <div class="form-group">
             <label for="engineSelect">配音引擎</label>
-            <select id="engineSelect"><option value="local">浏览器本地语音</option><option value="azure" disabled>微软神经语音（尚未连接）</option></select>
+            <select id="engineSelect"><option value="local">浏览器本地语音</option><option value="azure-key">微软 Azure Speech · 自填密钥</option><option value="compatible">兼容语音接口 · 自选模型</option><option value="azure" disabled hidden>微软 Azure Speech · 站点提供</option></select>
             <p id="engineNote" style="font-size:14px">字幕和配音均在浏览器内处理。</p>
+            <div id="azureFields" class="provider-fields" hidden>
+              <label for="azureRegion">Azure 资源区域</label><input id="azureRegion" placeholder="例如 japaneast" spellcheck="false">
+              <label for="azureKey">Speech 资源密钥</label><input id="azureKey" type="password" autocomplete="off" spellcheck="false">
+            </div>
+            <div id="customFields" class="provider-fields" hidden>
+              <label for="speechUrl">语音合成接口（完整 HTTPS 地址）</label><input id="speechUrl" type="url" value="https://api.openai.com/v1/audio/speech" spellcheck="false">
+              <label for="speechModel">模型名称</label><input id="speechModel" list="speechModels" value="gpt-4o-mini-tts" spellcheck="false"><datalist id="speechModels"><option value="gpt-4o-mini-tts"><option value="tts-1"><option value="tts-1-hd"></datalist>
+              <label for="customVoice">音色 ID</label><input id="customVoice" value="alloy" spellcheck="false">
+              <label for="customKey">接口密钥</label><input id="customKey" type="password" autocomplete="off" spellcheck="false">
+            </div>
             <label for="voiceSelect">🗣️ 2. 选择核心配音员</label>
             <select id="voiceSelect">
                                     <option value="ja+m3">日语男声</option>
@@ -5600,10 +5612,11 @@ async function convert(file, task, settings) {
     for (const [i, cue] of cues.entries()) {
       task.status.className = 'status-loading';
       task.status.textContent = '正在配音 · ' + (i + 1) + ' / ' + cues.length;
-      const buffer = settings.engine === 'azure'
-        ? await azureSpeech(cue.text, settings, signal, message => { task.status.textContent = message; })
-        : await generateSpeech(cue.text, settings, signal);
-      timeline.add(cue,readSpeech(buffer),settings);
+      const samples = settings.engine === 'local'
+        ? readSpeech(await generateSpeech(cue.text,settings,signal))
+        : await providerSamples(cue.text,settings,signal,message => { task.status.textContent = message; });
+      signal.throwIfAborted();
+      timeline.add(cue,samples,settings);
     }
     if (signal.aborted) return;
     const record = {id:crypto.randomUUID?.() || Array.from(crypto.getRandomValues(new Uint32Array(4))).join('-'), name:file.name, created:Date.now(), audio:timeline.wav()};
@@ -5626,14 +5639,14 @@ async function startBatchConversion() {
   notice('');
   try {
     await restored;
-    const settings = {engine:byId('engineSelect').value, voice:byId('voiceSelect').value, stretch:byId('speedModeSelect').selectedIndex === 1,
+    const settings = {...providerSettings(), voice:byId('voiceSelect').value, stretch:byId('speedModeSelect').selectedIndex === 1,
       rate:+byId('rateSlider').value, pitch:+byId('pitchSlider').value, volume:+byId('volumeSlider').value};
     const batch = files.map(file => ({file, task:taskRow(file.name)}));
     for (const [i, entry] of batch.entries()) {
       submit.textContent = '正在执行 · ' + (i+1) + ' / ' + files.length;
       await convert(entry.file,entry.task,settings);
     }
-  } finally { submit.disabled = false; submit.textContent = '🚀 开始执行'; }
+  } catch (error) { notice(error.message); } finally { submit.disabled = false; submit.textContent = '🚀 开始执行'; }
 }
 </script><script type="text/plain" id="third-party-notices">eSpeak NG JS 1.0.2 | https://github.com/ianmarmour/espeak-ng.js | https://github.com/espeak-ng/espeak-ng | bundled loader adapted for a standalone browser worker
                     GNU GENERAL PUBLIC LICENSE

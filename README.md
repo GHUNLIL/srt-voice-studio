@@ -1,10 +1,12 @@
 # SRT 字幕配音工具
 
-[打开网站](https://ghunlil.github.io/srt-voice-studio/) · [部署到自己的 Cloudflare](https://deploy.workers.cloudflare.com/?url=https://github.com/GHUNLIL/srt-voice-studio)
+[打开网站](https://srt.unlil.com/) · [部署到自己的 Cloudflare](https://deploy.workers.cloudflare.com/?url=https://github.com/GHUNLIL/srt-voice-studio)
 
-本地引擎在浏览器里合成语音。选择微软引擎后，页面将每段字幕正文、音色和语速发送给 Cloudflare Worker，由它调用 Azure Speech。音调、音量、时间轴对齐和 WAV 导出均在浏览器内处理。
+公开站点使用 Cloudflare Pages。默认引擎在浏览器内合成。选择微软 Azure 后可填写自己的 Speech 资源区域和密钥；选择兼容语音接口后可填写完整 HTTPS 地址、模型名、音色和密钥。密钥与字幕直接发送到所选服务，服务须允许浏览器跨域调用。刷新页面后需重新填写密钥。
 
-## 启用微软音色
+更新 Pages 站点时运行 `node worker/build.mjs`，将生成的 `public/` 内容上传到 Cloudflare Pages 的 `unlil-srt` 项目。历史记录和 WAV 保存在使用者的浏览器内。
+
+## 可选的站点共享微软音色
 
 1. 在 Azure 创建 Speech 资源，试用请选择 F0。在「密钥和终结点」中找到区域短名及一把密钥。
 2. 使用上方部署链接，在 Cloudflare 中配置 Worker 的两个运行时变量。将区域短名（例如 japaneast）填入 AZURE_SPEECH_REGION，将资源密钥作为 Secret 填入 AZURE_SPEECH_KEY。若部署页面未显示输入框，可在 Worker 设置的 Variables and Secrets 下添加并部署。
