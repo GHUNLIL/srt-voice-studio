@@ -55,3 +55,6 @@ audio {grid-column:1/-1; width:100%; height:34px}
   .preset-btn {min-height:38px}
 }
 @media(max-width:360px) {.run {align-items:stretch; flex-direction:column}.presets {grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+.voice-example {margin-top:12px}
+#sampleText {font-size:13px; color:#555; margin:5px 0 0}

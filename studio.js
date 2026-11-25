@@ -374,13 +374,19 @@ async function convert(file, task, settings) {
     if (!signal.aborted) finishTask(task, '配音失败 · ' + error.message, 'status-error');
   }
 }
-async function startBatchConversion() {
+async function startBatchConversion(example = false) {
   const input = byId('srtFiles');
   const files = Array.from(input.files);
+  if (example) {
+    const {name,text} = currentExample();
+    const filename = name.replace(/[^\p{L}\p{N} ._-]/gu,' ').replace(/\s+/g,' ').trim();
+    files.splice(0,files.length,new File(['1\n00:00:00,000 --> 00:00:05,000\n'+text], '试听 '+filename+'.srt'));
+  }
   if (!files.length) { notice('请先选择一个或多个 SRT 字幕文件。'); input.focus(); return; }
   const submit = byId('submitBtn');
   if (submit.disabled) return;
   submit.disabled = true;
+  byId('sampleBtn').disabled = true;
   notice('');
   try {
     await restored;
@@ -391,5 +397,5 @@ async function startBatchConversion() {
       submit.textContent = '正在配音 · ' + (i+1) + ' / ' + files.length;
       await convert(entry.file,entry.task,settings);
     }
-  } catch (error) { notice(error.message); } finally { submit.disabled = false; submit.textContent = '开始配音'; }
+  } catch (error) { notice(error.message); } finally { submit.disabled = false; byId('sampleBtn').disabled = false; submit.textContent = '开始配音'; }
 }

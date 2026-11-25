@@ -47,6 +47,31 @@ fillVoices('sub2Voice',chatVoices);
 updateSpeechVoices();
 byId('speechModel').addEventListener('change',updateSpeechVoices);
 
+const previewLines = {
+  ja:'朝の駅に、まもなく最初の電車が到着します。',
+  ko:'해가 뜨자 조용하던 시장이 조금씩 활기를 되찾습니다.',
+  'en-us':'The morning train rolls past the lake as the sun comes up.',
+  de:'Am frühen Morgen öffnet die kleine Bäckerei am Marktplatz.',
+  cmn:'天刚亮，街角的面包店已经飘出了香味。'
+};
+
+function currentExample() {
+  const mode = engine.value;
+  const title = engine.selectedOptions[0].textContent;
+  if (mode === 'sub2api' || mode === 'compatible') {
+    const chat = mode === 'sub2api';
+    const model = selectedSetting(chat ? 'sub2Model' : 'speechModel');
+    const voice = selectedSetting(chat ? 'sub2Voice' : 'customVoice');
+    return {name:[title,model,voice].filter(Boolean).join(' · '),
+      text:chat ? '雨刚停，街上的灯一盏盏亮了起来。我们出发吧。' : '本次列车即将到站，请带好随身物品。'};
+  }
+  const lang = voiceList.value.split('+')[0];
+  return {name:title+' · '+voiceList.selectedOptions[0].textContent, text:previewLines[lang]};
+}
+function showExample() {
+  byId('sampleText').textContent = currentExample().text;
+}
+voiceList.addEventListener('change',showExample);
 function updateProvider() {
   const mode = engine.value;
   byId('localFields').hidden = mode !== 'local';
@@ -71,6 +96,7 @@ function updateProvider() {
     compatible:'每段字幕和密钥将直接发送到下方地址。请填写你信任且支持浏览器跨域请求的语音接口，费用计入该密钥所属账户。'
   };
   byId('engineNote').textContent = notes[mode];
+  showExample();
 }
 engine.addEventListener('change', updateProvider);
 byId('speechUrl').addEventListener('input', () => { byId('customKey').value = ''; });

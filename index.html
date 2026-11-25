@@ -11,7 +11,7 @@
 <label for="srtFiles">字幕文件 <small>可多选 .srt</small></label>
 <input type="file" id="srtFiles" accept=".srt" multiple>
 <label for="engineSelect">配音引擎</label>
-<select id="engineSelect"><option value="local">浏览器本地语音</option><option value="azure-key">微软 Azure Speech · 自填密钥</option><option value="sub2api" selected>ChatGPT · UNLIL Sub2API</option><option value="compatible">兼容语音接口 · 自选模型</option><option value="azure" disabled hidden>微软 Azure Speech · 站点提供</option></select>
+<select id="engineSelect"><option value="local">浏览器本地语音</option><option value="azure-key">微软 Azure Speech · 自填密钥</option><option value="sub2api" selected>ChatGPT/OpenAI</option><option value="compatible">兼容语音接口 · 自选模型</option><option value="azure" disabled hidden>微软 Azure Speech · 站点提供</option></select>
             <p id="engineNote"></p>
 <div id="localFields" hidden><button type="button" id="downloadEngine">下载并缓存引擎（9.3 MB）</button></div>
 <div id="azureFields" class="provider-fields" hidden>
@@ -44,6 +44,8 @@
 <option value="de+m3">德语男声</option>
 <option value="de+f3">德语女声</option>
 </select>
+<div class="voice-example"><button type="button" id="sampleBtn" onclick="startBatchConversion(true)">测试当前配音</button>
+<p id="sampleText"></p></div>
 <label for="speedModeSelect">时间轴对齐</label>
 <select id="speedModeSelect"><option value="仅加速">仅压缩超时语音</option><option value="加速和减速">拉伸或压缩至字幕时长</option></select>
 </section>
