@@ -65,6 +65,9 @@ button.main-btn:disabled { background: #a0cfff; cursor: not-allowed; }
             <input type="file" id="srtFiles" accept=".srt" multiple="">
         </div>
         <div class="form-group">
+            <label for="engineSelect">配音引擎</label>
+            <select id="engineSelect"><option value="local">浏览器本地语音</option><option value="azure" disabled>微软神经语音（尚未连接）</option></select>
+            <p id="engineNote" style="font-size:14px">字幕和配音均在浏览器内处理。</p>
             <label for="voiceSelect">🗣️ 2. 选择核心配音员</label>
             <select id="voiceSelect">
                                     <option value="ja+m3">日语男声</option>
@@ -129,7 +132,7 @@ button.main-btn:disabled { background: #a0cfff; cursor: not-allowed; }
         <button class="main-btn" id="submitBtn" onclick="startBatchConversion()">🚀 开始执行</button>
         <p id="notice" role="status" hidden></p>
         <div class="task-list" id="taskList"></div>
-        <div class="strong-copyright">字幕在浏览器内处理 · <span>eSpeak NG 语音合成</span></div>
+        <div class="strong-copyright">SRT 字幕配音工具</div>
     </div>
 </div>
 <script type="text/plain" id="worker-src">
@@ -5597,7 +5600,9 @@ async function convert(file, task, settings) {
     for (const [i, cue] of cues.entries()) {
       task.status.className = 'status-loading';
       task.status.textContent = '正在配音 · ' + (i + 1) + ' / ' + cues.length;
-      const buffer = await generateSpeech(cue.text,settings,signal);
+      const buffer = settings.engine === 'azure'
+        ? await azureSpeech(cue.text, settings, signal, message => { task.status.textContent = message; })
+        : await generateSpeech(cue.text, settings, signal);
       timeline.add(cue,readSpeech(buffer),settings);
     }
     if (signal.aborted) return;
@@ -5621,7 +5626,7 @@ async function startBatchConversion() {
   notice('');
   try {
     await restored;
-    const settings = {voice:byId('voiceSelect').value, stretch:byId('speedModeSelect').selectedIndex === 1,
+    const settings = {engine:byId('engineSelect').value, voice:byId('voiceSelect').value, stretch:byId('speedModeSelect').selectedIndex === 1,
       rate:+byId('rateSlider').value, pitch:+byId('pitchSlider').value, volume:+byId('volumeSlider').value};
     const batch = files.map(file => ({file, task:taskRow(file.name)}));
     for (const [i, entry] of batch.entries()) {
@@ -6305,4 +6310,4 @@ may consider it more useful to permit linking proprietary applications with
 the library.  If this is what you want to do, use the GNU Lesser General
 Public License instead of this License.  But first, please read
 <https://www.gnu.org/licenses/why-not-lgpl.html>.
-</script></body></html>
+</script><script src="./cloud-speech.js"></script></body></html>

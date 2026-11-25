@@ -1,0 +1,11 @@
+{
+  "name": "srt-voice-studio",
+  "main": "worker/speech.mjs",
+  "compatibility_date": "2026-06-01",
+  "workers_dev": true,
+  "build": { "command": "node worker/build.mjs" },
+  "assets": { "directory": "./public", "binding": "ASSETS", "run_worker_first": ["/api/*"] },
+  "ratelimits": [
+    { "name": "SPEECH_LIMIT", "namespace_id": "10401", "simple": { "limit": 20, "period": 60 } }
+  ]
+}
