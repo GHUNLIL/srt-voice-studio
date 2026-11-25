@@ -16,6 +16,37 @@ for (const [id,label,voice] of chineseVoices) {
   voiceList.add(new Option(label,id));
   originalNames.push(label);
 }
+const chatVoices = 'alloy ash ballad coral echo sage shimmer verse'.split(' ');
+const legacyVoices = 'alloy ash coral echo fable onyx nova sage shimmer'.split(' ');
+const ttsVoices = [...legacyVoices,'ballad','verse','marin','cedar'];
+
+function selectedSetting(id) {
+  const selected = byId(id).value;
+  return selected === ':other' ? byId(id+'Other').value.trim() : selected;
+}
+function updateCustomField(id) {
+  byId(id+'Other').hidden = byId(id).value !== ':other';
+}
+function fillVoices(id, voices) {
+  const select = byId(id);
+  const previous = select.value;
+  const options = voices.map(voice => new Option(
+    voice[0].toUpperCase()+voice.slice(1),voice));
+  select.replaceChildren(...options,new Option('其他（自定义）',':other'));
+  if (previous === ':other' || voices.includes(previous)) select.value = previous;
+  updateCustomField(id);
+}
+for (const id of ['sub2Model','sub2Voice','speechModel','customVoice','azureRegion']) {
+  byId(id).addEventListener('change', () => updateCustomField(id));
+}
+function updateSpeechVoices() {
+  const legacy = ['tts-1','tts-1-hd'].includes(byId('speechModel').value);
+  fillVoices('customVoice', legacy ? legacyVoices : ttsVoices);
+}
+fillVoices('sub2Voice',chatVoices);
+updateSpeechVoices();
+byId('speechModel').addEventListener('change',updateSpeechVoices);
+
 function updateProvider() {
   const mode = engine.value;
   byId('localFields').hidden = mode !== 'local';
@@ -36,7 +67,7 @@ function updateProvider() {
     local:'字幕和配音均在浏览器内处理。',
     azure:'字幕正文将通过站点后端发送至微软合成。',
     'azure-key':'每段字幕和密钥直接发送给微软。密钥仅用于本页，刷新后需重新填写。',
-    sub2api:'字幕将通过本站发送至 sub2api.unlil.com，使用站点配额。请选择支持音频输出的模型。',
+    sub2api:'字幕将通过本站发送至 sub2api.unlil.com，使用站点配额。模型可用性取决于站点分组。',
     compatible:'每段字幕和密钥将直接发送到下方地址。请填写你信任且支持浏览器跨域请求的语音接口，费用计入该密钥所属账户。'
   };
   byId('engineNote').textContent = notes[mode];
@@ -49,13 +80,13 @@ function providerSettings() {
   const mode = engine.value;
   const value = id => byId(id).value.trim();
   if (mode === 'azure-key') {
-    const region = value('azureRegion').toLowerCase();
+    const region = selectedSetting('azureRegion').toLowerCase();
     if (!/^[a-z][a-z0-9]{1,40}$/.test(region) || !value('azureKey'))
       throw new Error('请填写 Azure 区域短名和 Speech 资源密钥。');
     return {engine:mode, url:'https://' + region + '.tts.speech.microsoft.com/cognitiveservices/v1', key:value('azureKey')};
   }
   if (mode === 'sub2api') {
-    const model = value('sub2Model'), voiceId = value('sub2Voice');
+    const model = selectedSetting('sub2Model'), voiceId = selectedSetting('sub2Voice');
     if (!model || !voiceId) throw new Error('请填写音频模型和音色。');
     return {engine:mode,model,voiceId,url:'/api/sub2api/speech'};
   }
@@ -64,7 +95,7 @@ function providerSettings() {
     try { url = new URL(value('speechUrl')); } catch {}
     if (url?.protocol !== 'https:' || url.username || url.password || url.hash)
       throw new Error('请填写语音合成接口的完整 HTTPS 地址。');
-    const model = value('speechModel'), voiceId = value('customVoice'), key = value('customKey');
+    const model = selectedSetting('speechModel'), voiceId = selectedSetting('customVoice'), key = value('customKey');
     if (!model || !voiceId || !key) throw new Error('请填写模型名称、音色 ID 和接口密钥。');
     return {engine:mode,url:url.href,model,voiceId,key};
   }

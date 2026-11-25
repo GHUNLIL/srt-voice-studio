@@ -15,17 +15,22 @@
             <p id="engineNote"></p>
 <div id="localFields" hidden><button type="button" id="downloadEngine">下载并缓存引擎（9.3 MB）</button></div>
 <div id="azureFields" class="provider-fields" hidden>
-<label for="azureRegion">Azure 资源区域</label><input id="azureRegion" placeholder="例如 japaneast" spellcheck="false">
+<label for="azureRegion">Azure 资源区域</label><select id="azureRegion"><option value="" selected disabled>选择 Speech 资源所在区域</option><option value="japaneast">日本东部 · japaneast</option><option value="japanwest">日本西部 · japanwest</option><option value="eastasia">东亚 · eastasia</option><option value="southeastasia">东南亚 · southeastasia</option><option value="koreacentral">韩国中部 · koreacentral</option><option value="eastus">美国东部 · eastus</option><option value="eastus2">美国东部 2 · eastus2</option><option value="westus">美国西部 · westus</option><option value="westus2">美国西部 2 · westus2</option><option value="westeurope">西欧 · westeurope</option><option value="northeurope">北欧 · northeurope</option><option value="uksouth">英国南部 · uksouth</option><option value="australiaeast">澳大利亚东部 · australiaeast</option><option value="canadacentral">加拿大中部 · canadacentral</option><option value="centralindia">印度中部 · centralindia</option><option value="centralus">美国中部 · centralus</option><option value="francecentral">法国中部 · francecentral</option><option value="germanywestcentral">德国中西部 · germanywestcentral</option><option value=":other">其他（自定义）</option></select>
+<input id="azureRegionOther" aria-label="自定义Azure 资源区域" placeholder="自定义Azure 资源区域" hidden spellcheck="false">
 <label for="azureKey">Speech 资源密钥</label><input id="azureKey" type="password" autocomplete="off" spellcheck="false">
 </div>
 <div id="sub2Fields" class="provider-fields" hidden>
-<label for="sub2Model">音频模型</label><input id="sub2Model" value="gpt-audio" spellcheck="false">
-<label for="sub2Voice">音色</label><input id="sub2Voice" value="alloy" spellcheck="false">
+<label for="sub2Model">音频模型</label><select id="sub2Model"><option value="gpt-audio">GPT Audio（标准）</option><option value="gpt-audio-mini">GPT Audio mini（轻量）</option><option value=":other">其他（自定义）</option></select>
+<input id="sub2ModelOther" aria-label="自定义音频模型" placeholder="自定义音频模型" hidden spellcheck="false">
+<label for="sub2Voice">音色</label><select id="sub2Voice"><option value="alloy">Alloy</option><option value=":other">其他（自定义）</option></select>
+<input id="sub2VoiceOther" aria-label="自定义音色" placeholder="自定义音色" hidden spellcheck="false">
 </div>
 <div id="customFields" class="provider-fields" hidden>
 <label for="speechUrl">语音合成接口（完整 HTTPS 地址）</label><input id="speechUrl" type="url" value="https://api.openai.com/v1/audio/speech" spellcheck="false">
-<label for="speechModel">模型名称</label><input id="speechModel" list="speechModels" value="gpt-4o-mini-tts" spellcheck="false"><datalist id="speechModels"><option value="gpt-4o-mini-tts"><option value="tts-1"><option value="tts-1-hd"></datalist>
-<label for="customVoice">音色 ID</label><input id="customVoice" value="alloy" spellcheck="false">
+<label for="speechModel">语音模型</label><select id="speechModel"><option value="gpt-4o-mini-tts">GPT-4o mini TTS</option><option value="tts-1">TTS-1（低延迟）</option><option value="tts-1-hd">TTS-1 HD（高音质）</option><option value=":other">其他（自定义）</option></select>
+<input id="speechModelOther" aria-label="自定义语音模型" placeholder="自定义语音模型" hidden spellcheck="false">
+<label for="customVoice">音色</label><select id="customVoice"><option value="alloy">Alloy</option><option value=":other">其他（自定义）</option></select>
+<input id="customVoiceOther" aria-label="自定义音色" placeholder="自定义音色" hidden spellcheck="false">
 <label for="customKey">接口密钥</label><input id="customKey" type="password" autocomplete="off" spellcheck="false">
 </div>
 <label for="voiceSelect">配音员</label>
