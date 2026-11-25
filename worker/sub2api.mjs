@@ -1,13 +1,14 @@
 const gateway = 'https://sub2api.unlil.com/v1';
 
-export async function sub2Speech(request) {
+export async function sub2Speech(request, env) {
   const headers = {'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'};
   const fail = (status,error) => Response.json({error}, {status,headers});
   if (request.method !== 'POST') return fail(405,'请使用 POST 请求。');
   const origin = request.headers.get('Origin');
   if (origin && origin !== new URL(request.url).origin) return fail(403,'请在配音站点使用此接口。');
-  const authorization = request.headers.get('Authorization') || '';
-  if (!/^Bearer [^\s]+$/.test(authorization)) return fail(401,'请填写 Sub2API 密钥。');
+  const key = env.SUB2API_KEY?.trim();
+  if (!key) return fail(503,'管理员尚未配置站点 Sub2API 密钥。');
+  const authorization = 'Bearer ' + key;
   let data;
   try { data = await request.json(); } catch { return fail(400,'请求格式无效。'); }
   if (typeof data?.input !== 'string' || !data.input.trim() || data.input.length > 4096 ||

@@ -34,7 +34,7 @@ function updateProvider() {
     local:'字幕和配音均在浏览器内处理。',
     azure:'字幕正文将通过站点后端发送至微软合成。',
     'azure-key':'每段字幕和密钥直接发送给微软。密钥仅用于本页，刷新后需重新填写。',
-    sub2api:'已连接目标网关 sub2api.unlil.com。本站转发字幕和密钥，按你的 Sub2API 分组计费。模型须支持聊天音频输出。',
+    sub2api:'字幕将通过本站发送至 sub2api.unlil.com，使用站点配额。请选择支持音频输出的模型。',
     compatible:'每段字幕和密钥将直接发送到下方地址。请填写你信任且支持浏览器跨域请求的语音接口，费用计入该密钥所属账户。'
   };
   byId('engineNote').textContent = notes[mode];
@@ -53,9 +53,9 @@ function providerSettings() {
     return {engine:mode, url:'https://' + region + '.tts.speech.microsoft.com/cognitiveservices/v1', key:value('azureKey')};
   }
   if (mode === 'sub2api') {
-    const key = value('sub2Key'), model = value('sub2Model'), voiceId = value('sub2Voice');
-    if (!key || !model || !voiceId) throw new Error('请填写 Sub2API 密钥、音频模型和音色。');
-    return {engine:mode,key,model,voiceId,url:'/api/sub2api/speech'};
+    const model = value('sub2Model'), voiceId = value('sub2Voice');
+    if (!model || !voiceId) throw new Error('请填写音频模型和音色。');
+    return {engine:mode,model,voiceId,url:'/api/sub2api/speech'};
   }
   if (mode === 'compatible') {
     let url;
@@ -80,12 +80,13 @@ async function providerSamples(text, settings, signal, report) {
     headers = {'Ocp-Apim-Subscription-Key':settings.key,'Content-Type':'application/ssml+xml','X-Microsoft-OutputFormat':'riff-22050hz-16bit-mono-pcm'};
     body = '<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="'+voice.slice(0,5)+'"><voice name="'+voice+'"><prosody rate="'+rate+'">'+escaped+'</prosody></voice></speak>';
   } else {
-    headers = {Authorization:'Bearer ' + settings.key,'Content-Type':'application/json'};
+    headers = {'Content-Type':'application/json'};
+    if (settings.engine !== 'sub2api') headers.Authorization = 'Bearer ' + settings.key;
     body = JSON.stringify({input:text,model:settings.model,voice:settings.voiceId,speed:1+settings.rate/100,response_format:'wav'});
   }
   let response;
   try {
-    response = await fetch(settings.url,{method:'POST',headers,body,signal,credentials:'omit',redirect:'error',cache:'no-store',referrerPolicy:'no-referrer'});
+    response = await fetch(settings.url,{method:'POST',headers,body,signal,credentials:settings.engine === 'sub2api' ? 'same-origin' : 'omit',redirect:'error',cache:'no-store',referrerPolicy:'no-referrer'});
   } catch (error) {
     signal.throwIfAborted();
     throw new Error('无法连接语音接口，请检查地址、网络和服务端跨域设置。');

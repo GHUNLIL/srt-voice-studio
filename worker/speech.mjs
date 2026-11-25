@@ -1,3 +1,4 @@
+import {requireLogin, privateResponse} from './site-access.mjs';
 import {sub2Speech} from './sub2api.mjs';
 
 const voices = new Set([
@@ -11,9 +12,11 @@ function escapeXml(text) {
 
 export default {
   async fetch(request, env) {
+    const denial = await requireLogin(request,env);
+    if (denial) return denial;
     const url = new URL(request.url);
-    if (url.pathname === '/api/sub2api/speech') return sub2Speech(request);
-    if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
+    if (url.pathname === '/api/sub2api/speech') return sub2Speech(request,env);
+    if (!url.pathname.startsWith('/api/')) return privateResponse(await env.ASSETS.fetch(request));
     const origin = request.headers.get('Origin');
     const headers = { 'Cache-Control': 'no-store', 'Vary': 'Origin' };
     const fail = (status, error) => Response.json({error}, {status, headers});
