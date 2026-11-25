@@ -25,8 +25,11 @@ export async function sub2Speech(request, env) {
           {role:'user',content:data.input}]})
     });
     if (upstream.status >= 300 && upstream.status < 400) return fail(502,'Sub2API 地址返回重定向。');
+    if (upstream.status === 404) {
+      return fail(503, '站点的 Sub2API 网关暂时无法提供模型 ' + data.model + '。管理员需检查分组内的音频上游。你可以切换到「浏览器本地语音」继续配音。');
+    }
     if (!upstream.ok) {
-      const hints = {400:'该分组或模型可能不支持音频输出，请核对模型与音色。',401:'Sub2API 密钥无效。',402:'请检查 Sub2API 余额。',403:'请检查 Sub2API 分组权限。',404:'请检查分组内的音频模型名称。',429:'Sub2API 已限流，请稍后重试。'};
+      const hints = {400:'该分组或模型可能不支持音频输出，请核对模型与音色。',401:'Sub2API 密钥无效。',402:'请检查 Sub2API 余额。',403:'请检查 Sub2API 分组权限。',429:'Sub2API 已限流，请稍后重试。'};
       return fail([401,402,403].includes(upstream.status)?502:upstream.status,'Sub2API 返回 HTTP '+upstream.status+'。'+(hints[upstream.status] || '请检查网关及上游状态。'));
     }
     const result = await upstream.json();
