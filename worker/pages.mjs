@@ -10,6 +10,6 @@ export default {
     if (path === '/api/status') return Response.json({service:'azure-srt',configured:false}, {headers:{'Cache-Control':'no-store'}});
     const headers = new Headers(request.headers);
     headers.delete('Authorization');
-    return privateResponse(await env.ASSETS.fetch(new Request(request,{headers})));
+    return privateResponse(await env.ASSETS.fetch(new Request(request,{headers})), path);
   }
 };

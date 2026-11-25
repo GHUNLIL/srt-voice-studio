@@ -1,0 +1,57 @@
+:root {color-scheme:light; font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; color:#111; background:#fff; accent-color:#111}
+* {box-sizing:border-box}
+body {margin:0}
+main {max-width:860px; margin:clamp(16px,4vw,42px) auto; padding:0 clamp(14px,3vw,28px)}
+header {border-bottom:2px solid; padding-bottom:14px}
+h1,h2,p {margin:0}
+h1 {font-size:clamp(22px,3vw,28px); line-height:1.2; letter-spacing:-.035em}
+h2 {font-size:17px; margin-bottom:16px}
+.workspace {display:grid; grid-template-columns:1fr 1fr; gap:clamp(24px,5vw,56px); padding:22px 0}
+section,.workspace>* {min-width:0}
+label,legend {display:block; margin:12px 0 5px; font-weight:550}
+small,#engineNote,.empty {color:#555; font-weight:400; font-size:13px}
+small {margin-inline-start:4px}
+input,select,button {font:inherit; color:inherit; max-width:100%}
+input:not([type=range],[type=checkbox]),select,button {background:#fff; border:1px solid #444; border-radius:0; padding:8px 10px}
+input:not([type=range],[type=checkbox]),select {width:100%; font-size:16px; min-width:0}
+input[type=file] {overflow:hidden; text-overflow:ellipsis}
+input::file-selector-button {border:0; border-right:1px solid #aaa; border-radius:0; font:inherit; background:white; color:inherit; margin-right:8px; padding:0 8px 0 0; cursor:pointer}
+button {cursor:pointer; line-height:1.25}
+button:disabled {opacity:.55; cursor:wait}
+:focus-visible {outline:2px solid #111; outline-offset:2px}
+button:hover:not(:disabled) {background:#eee}
+#engineNote {margin:6px 0 0; overflow-wrap:anywhere}
+fieldset {min-width:0; padding:0; border:0; margin:0}
+legend {margin:0 0 6px; padding:0}
+.presets {display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:4px}
+.preset-btn {font-size:13px; min-height:34px; padding:4px 2px}
+.preset-btn.active,#submitBtn {color:white; background:#111; border-color:#111}
+.preset-btn.active:hover,#submitBtn:hover:not(:disabled) {background:#333}
+.adjustments {margin-top:18px}
+.adjust {display:grid; grid-template-columns:auto minmax(40px,1fr) 5ch auto; gap:8px; align-items:center; min-height:42px}
+.adjust label,.check {margin:0}
+.adjust input {width:100%; margin:0}
+output {font:13px/1.2 ui-monospace,monospace; text-align:right}
+.reset-link {border:0; padding:6px; text-decoration:underline; font-size:13px}
+.run,.result-head {display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap}
+.run {border-block:1px solid; padding:12px 0}
+.check {display:flex; align-items:center; gap:7px; font-weight:400}
+.check input {margin:0; width:16px; height:16px}
+#submitBtn {min-width:144px; min-height:42px; font-weight:650}
+.results {margin-top:22px}
+.result-head h2 {margin:0}
+.result-head button,.task-actions button {font-size:13px}
+.empty,#notice {margin-top:12px}
+#taskList:not(:empty)+.empty,[hidden] {display:none!important}
+.task-item {display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; align-items:center; border-top:1px solid #bbb; margin-top:10px; padding-top:10px}
+.task-info {display:grid; overflow-wrap:anywhere}
+.task-info span {font-size:13px}
+.task-actions a {color:inherit; text-underline-offset:3px}
+audio {grid-column:1/-1; width:100%; height:34px}
+@media(max-width:660px) {
+  .workspace {grid-template-columns:1fr; gap:20px; padding:18px 0}
+  .workspace section+section {border-top:1px solid #aaa; padding-top:16px}
+  h2 {margin-bottom:12px}
+  .preset-btn {min-height:38px}
+}
+@media(max-width:360px) {.run {align-items:stretch; flex-direction:column}.presets {grid-template-columns:repeat(3,minmax(0,1fr))}}

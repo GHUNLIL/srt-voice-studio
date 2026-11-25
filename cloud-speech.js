@@ -18,6 +18,8 @@ for (const [id,label,voice] of chineseVoices) {
 }
 function updateProvider() {
   const mode = engine.value;
+  byId('localFields').hidden = mode !== 'local';
+  if (mode === 'local') showCacheState();
   const microsoft = mode === 'azure' || mode === 'azure-key';
   byId('azureFields').hidden = mode !== 'azure-key';
   byId('customFields').hidden = mode !== 'compatible';
@@ -156,4 +158,4 @@ async function azureSpeech(text, settings, signal, report) {
     await waitForThrottle(Math.max(seconds,1)*1000,signal);
   }
 }
-discoverCloudSpeech();
+engine.addEventListener('focus', discoverCloudSpeech, {once:true});

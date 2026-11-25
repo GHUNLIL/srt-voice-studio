@@ -2,7 +2,7 @@
 
 [打开配音网站](https://srt.unlil.com/)
 
-Cloudflare Pages 在返回网页、资源和配音接口前验证站点账号。浏览器本地引擎可直接生成 WAV。微软 Azure 和自选兼容接口支持使用者填写自己的服务配置。
+Cloudflare Pages 在返回网页、资源和配音接口前验证站点账号。默认选择 ChatGPT。浏览器本地配音需要手动下载一次引擎，浏览器缓存可在后续任务中复用。微软 Azure 和自选兼容接口支持使用者填写自己的服务配置。
 
 ChatGPT 模式通过同域接口将字幕发送到 sub2api.unlil.com。请在 Cloudflare 生产环境中配置加密变量 `SUB2API_KEY`，密钥所属分组需要支持聊天音频输出。默认模型为 `gpt-audio`，音色为 `alloy`。
 

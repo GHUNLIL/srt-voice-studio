@@ -20,9 +20,10 @@ export async function requireLogin(request, env) {
   }});
 }
 
-export function privateResponse(response) {
+export function privateResponse(response, pathname) {
   const result = new Response(response.body,response);
-  result.headers.set('Cache-Control','private, no-store');
+  const engineAsset = response.ok && /^\/engine\/(voices-[0-9a-f]{12}\.bin|espeak-[0-9a-f]{12}\.js)$/.test(pathname);
+  result.headers.set('Cache-Control',engineAsset ? 'private, max-age=31536000, immutable' : 'private, no-store');
   result.headers.set('Referrer-Policy','no-referrer');
   return result;
 }

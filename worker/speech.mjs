@@ -16,7 +16,7 @@ export default {
     if (denial) return denial;
     const url = new URL(request.url);
     if (url.pathname === '/api/sub2api/speech') return sub2Speech(request,env);
-    if (!url.pathname.startsWith('/api/')) return privateResponse(await env.ASSETS.fetch(request));
+    if (!url.pathname.startsWith('/api/')) return privateResponse(await env.ASSETS.fetch(request),url.pathname);
     const origin = request.headers.get('Origin');
     const headers = { 'Cache-Control': 'no-store', 'Vary': 'Origin' };
     const fail = (status, error) => Response.json({error}, {status, headers});
