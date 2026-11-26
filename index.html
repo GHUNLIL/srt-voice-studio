@@ -7,45 +7,10 @@
 </head><body><main>
 <header><h1>SRT 字幕配音</h1><a href="/account">账户与充值</a></header>
 <div class="workspace">
-<section aria-labelledby="source"><h2 id="source">字幕与声音</h2>
+<section aria-labelledby="source"><h2 id="source">本地神经配音</h2>
 <label for="srtFiles">字幕文件 <small>可多选 .srt</small></label>
 <input type="file" id="srtFiles" accept=".srt" multiple>
-<label for="engineSelect">配音引擎</label>
-<select id="engineSelect"><option value="neural">本地神经配音 · 高清</option><option value="local">浏览器本地语音 · 轻量</option><option value="azure-key">微软 Azure Speech · 自填密钥</option><option value="sub2api" selected>ChatGPT/OpenAI</option><option value="compatible">兼容语音接口 · 自选模型</option><option value="azure">微软 Neural · 原版音色</option></select>
-            <p id="engineNote"></p>
-<button type="button" id="useLocal">切换到高清本地配音</button>
-<div id="localFields" hidden><button type="button" id="downloadEngine">下载并缓存引擎（9.3 MB）</button></div>
-<div id="neuralFields" hidden><label for="neuralVoice">语言与音色</label><select id="neuralVoice"><option value="cmn">普通话 · Huayan</option><option value="ja">日语 · CSS10</option><option value="en-us">英语 · Lessac</option><option value="ko">韩语 · KSS</option><option value="de">德语 · Thorsten</option></select><button type="button" id="neuralDownload">下载并缓存音色</button></div>
-<div id="azureFields" class="provider-fields" hidden>
-<label for="azureRegion">Azure 资源区域</label><select id="azureRegion"><option value="" selected disabled>选择 Speech 资源所在区域</option><option value="japaneast">日本东部 · japaneast</option><option value="japanwest">日本西部 · japanwest</option><option value="eastasia">东亚 · eastasia</option><option value="southeastasia">东南亚 · southeastasia</option><option value="koreacentral">韩国中部 · koreacentral</option><option value="eastus">美国东部 · eastus</option><option value="eastus2">美国东部 2 · eastus2</option><option value="westus">美国西部 · westus</option><option value="westus2">美国西部 2 · westus2</option><option value="westeurope">西欧 · westeurope</option><option value="northeurope">北欧 · northeurope</option><option value="uksouth">英国南部 · uksouth</option><option value="australiaeast">澳大利亚东部 · australiaeast</option><option value="canadacentral">加拿大中部 · canadacentral</option><option value="centralindia">印度中部 · centralindia</option><option value="centralus">美国中部 · centralus</option><option value="francecentral">法国中部 · francecentral</option><option value="germanywestcentral">德国中西部 · germanywestcentral</option><option value=":other">其他（自定义）</option></select>
-<input id="azureRegionOther" aria-label="自定义Azure 资源区域" placeholder="自定义Azure 资源区域" hidden spellcheck="false">
-<label for="azureKey">Speech 资源密钥</label><input id="azureKey" type="password" autocomplete="off" spellcheck="false">
-</div>
-<div id="sub2Fields" class="provider-fields" hidden>
-<label for="sub2Model">音频模型</label><select id="sub2Model"><option value="gpt-audio">GPT Audio（标准）</option><option value="gpt-audio-mini">GPT Audio mini（轻量）</option><option value=":other">其他（自定义）</option></select>
-<input id="sub2ModelOther" aria-label="自定义音频模型" placeholder="自定义音频模型" hidden spellcheck="false">
-<label for="sub2Voice">音色</label><select id="sub2Voice"><option value="alloy">Alloy</option><option value=":other">其他（自定义）</option></select>
-<input id="sub2VoiceOther" aria-label="自定义音色" placeholder="自定义音色" hidden spellcheck="false">
-</div>
-<div id="customFields" class="provider-fields" hidden>
-<label for="speechUrl">语音合成接口（完整 HTTPS 地址）</label><input id="speechUrl" type="url" value="https://api.openai.com/v1/audio/speech" spellcheck="false">
-<label for="speechModel">语音模型</label><select id="speechModel"><option value="gpt-4o-mini-tts">GPT-4o mini TTS</option><option value="tts-1">TTS-1（低延迟）</option><option value="tts-1-hd">TTS-1 HD（高音质）</option><option value=":other">其他（自定义）</option></select>
-<input id="speechModelOther" aria-label="自定义语音模型" placeholder="自定义语音模型" hidden spellcheck="false">
-<label for="customVoice">音色</label><select id="customVoice"><option value="alloy">Alloy</option><option value=":other">其他（自定义）</option></select>
-<input id="customVoiceOther" aria-label="自定义音色" placeholder="自定义音色" hidden spellcheck="false">
-<label for="customKey">接口密钥</label><input id="customKey" type="password" autocomplete="off" spellcheck="false">
-</div>
-<label for="voiceSelect">配音员</label>
-<select id="voiceSelect">
-<option value="ja+m3">日语男声</option>
-<option value="ja+f3">日语女声</option>
-<option value="ko+m3">韩语男声</option>
-<option value="ko+f3">韩语女声</option>
-<option value="en-us+m3">英语男声</option>
-<option value="en-us+f3">英语女声</option>
-<option value="de+m3">德语男声</option>
-<option value="de+f3">德语女声</option>
-</select>
+<div id="neuralFields"><label for="neuralVoice">语言与音色</label><select id="neuralVoice"><option value="cmn">普通话 · Huayan</option><option value="ja">日语 · CSS10</option><option value="en-us">英语 · Lessac</option><option value="ko">韩语 · KSS</option><option value="de">德语 · Thorsten</option></select><button type="button" id="neuralDownload">下载并缓存音色</button></div>
 <div class="voice-example"><button type="button" id="sampleBtn" onclick="startBatchConversion(true)">测试当前配音</button>
 <p id="sampleText"></p></div>
 <label for="speedModeSelect">时间轴对齐</label>
@@ -88,4 +53,4 @@
 <p id="notice" role="status" hidden></p>
 <section class="results" aria-labelledby="history"><div class="result-head"><h2 id="history">配音记录</h2><button onclick="clearFinishedTasks()">清理历史记录</button></div>
 <div id="taskList"></div><p class="empty">暂无配音记录</p></section>
-</main><script src="./studio.js"></script><script src="./neural.js"></script><script src="./cloud-speech.js"></script></body></html>
+</main><script src="./studio.js"></script><script src="./neural.js"></script></body></html>

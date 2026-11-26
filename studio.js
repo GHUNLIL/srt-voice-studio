@@ -1,107 +1,3 @@
-let speechWorker;
-function stopWorker() {
-  if (speechWorker) speechWorker.terminate();
-  speechWorker = null;
-}
-const localCacheName = 'srt-local-speech';
-const localFiles = ['./engine/espeak-acf4a598457b.js','./engine/voices-ccb1881280f4.bin'];
-const localSizes = [179311, 9129834];
-const downloadButton = document.getElementById('downloadEngine');
-let downloading = false;
-
-async function cachedEngine() {
-  if (!window.caches) throw new Error('此浏览器不支持引擎缓存。请使用支持缓存的浏览器，或选择云端配音。');
-  const cache = await caches.open(localCacheName);
-  return Promise.all(localFiles.map(async file => {
-    const saved = await cache.match(file);
-    return saved?.headers.get('Content-Type')?.includes('text/html') ? undefined : saved;
-  }));
-}
-
-async function showCacheState() {
-  try {
-    const files = await cachedEngine();
-    if (downloading) return;
-    const ready = files.every(Boolean);
-    downloadButton.disabled = ready;
-    downloadButton.textContent = ready ? '引擎已缓存' : '下载并缓存引擎（9.3 MB）';
-  } catch (error) {
-    downloadButton.disabled = true;
-    downloadButton.textContent = error.message;
-  }
-}
-
-downloadButton.addEventListener('click', async () => {
-  if (downloading) return;
-  downloading = true;
-  downloadButton.disabled = true;
-  downloadButton.textContent = '正在下载引擎…';
-  notice('');
-  try {
-    const cache = await caches.open(localCacheName);
-    const saved = await cachedEngine();
-    const total = localSizes.reduce((sum, size) => sum + size, 0);
-    let loaded = 0;
-    for (const [i,file] of localFiles.entries()) {
-      const size = localSizes[i];
-      if (!saved[i]) {
-        const response = await fetch(file, {redirect:'error'});
-        if (!response.ok || !response.body || response.headers.get('Content-Type')?.includes('text/html'))
-          throw new Error('获取引擎失败');
-        const reader = response.body.getReader();
-        const bytes = new Uint8Array(size);
-        let offset = 0;
-        while (true) {
-          const {value,done} = await reader.read();
-          if (done) break;
-          bytes.set(value,offset);
-          offset += value.length;
-          const mb = ((loaded + offset) / 1e6).toFixed(1);
-          downloadButton.textContent = '正在下载 · ' + mb + ' / ' + (total / 1e6).toFixed(1) + ' MB';
-        }
-        if (offset !== size) throw new Error('引擎文件不完整');
-        await cache.put(file,new Response(bytes));
-      }
-      loaded += size;
-    }
-  } catch {
-    notice('引擎缓存失败，请检查网络和浏览器存储空间后重试。');
-  } finally {
-    downloading = false;
-    await showCacheState();
-  }
-});
-
-async function generateSpeech(text, settings, signal) {
-  signal.throwIfAborted();
-  let voicePack;
-  if (!speechWorker) {
-    const [loader, pack] = await cachedEngine();
-    if (!loader || !pack) {
-      await showCacheState();
-      throw new Error('请先点击“下载并缓存引擎”，完成后再开始配音。');
-    }
-    const workerBlob = new Blob([await loader.arrayBuffer()],{type:'text/javascript'});
-    voicePack = await pack.blob();
-    signal.throwIfAborted();
-    const url = URL.createObjectURL(workerBlob);
-    try { speechWorker = new Worker(url); } finally { URL.revokeObjectURL(url); }
-  }
-  return new Promise((resolve,reject) => {
-    const abort = () => { stopWorker(); reject(new DOMException('任务已取消','AbortError')); };
-    signal.addEventListener('abort',abort,{once:true});
-    speechWorker.onmessage = ({data}) => {
-      signal.removeEventListener('abort',abort);
-      if (data.error) reject(new Error(data.error));
-      else resolve(data.buffer);
-    };
-    speechWorker.onerror = event => {
-      signal.removeEventListener('abort',abort);
-      stopWorker(); reject(new Error(event.message || '浏览器无法启动语音引擎。'));
-    };
-    speechWorker.postMessage({voicePack,text,voice:settings.voice,rate:settings.rate});
-  });
-}
 'use strict';
 
 const SAMPLE_RATE = 22050;
@@ -134,23 +30,6 @@ function parseSrt(source) {
     if (end > SAMPLE_RATE * 3600 * 6) throw new Error('本机版单个文件的时间轴上限为 6 小时。');
     return {start, end, text};
   });
-}
-
-function readSpeech(buffer) {
-  const view = new DataView(buffer);
-  for (let at = 12; at + 8 <= buffer.byteLength;) {
-    const size = view.getUint32(at + 4, true);
-    if (view.getUint32(at) === 0x64617461 && at + 8 + size <= buffer.byteLength) {
-      const audio = new Int16Array(buffer, at + 8, Math.floor(size / 2));
-      let start = 0, end = audio.length;
-      while (start < end && Math.abs(audio[start]) < 32) start++;
-      while (end > start && Math.abs(audio[end - 1]) < 32) end--;
-      if (end === start) throw new Error('这段文字没有生成可听语音。');
-      return audio.subarray(Math.max(0, start - 100), Math.min(audio.length, end + 150));
-    }
-    at += 8 + size + (size % 2);
-  }
-  throw new Error('系统返回的音频格式无法读取。');
 }
 
 // Estimate a representative voiced pitch for the Hz offset shown by the UI.
@@ -388,9 +267,7 @@ async function convert(file, task, settings) {
     for (const [i, cue] of cues.entries()) {
       task.status.className = 'status-loading';
       task.status.textContent = '正在配音 · ' + (i + 1) + ' / ' + cues.length;
-      const samples = settings.engine === 'local'
-        ? readSpeech(await generateSpeech(cue.text,settings,signal))
-        : await providerSamples(cue.text,settings,signal,message => { task.status.textContent = message; });
+      const samples = await neuralSpeech(cue.text,settings,signal);
       signal.throwIfAborted();
       timeline.add(cue,samples,settings);
     }
@@ -404,11 +281,6 @@ async function convert(file, task, settings) {
   } catch (error) {
     if (!signal.aborted) {
       finishTask(task, '配音失败 · ' + error.message, 'status-error');
-      if (error.offerLocal) {
-        const switchButton = element('button','','切换到本地配音');
-        switchButton.onclick = selectLocalSpeech;
-        task.actions.append(switchButton);
-      }
     }
   }
 }
@@ -428,21 +300,14 @@ async function startBatchConversion(example = false) {
   notice('');
   try {
     await restored;
-    const settings = {...providerSettings(), voice:byId('voiceSelect').value, natural:byId('speedModeSelect').value === 'natural', stretch:byId('speedModeSelect').value === '加速和减速',
+    const settings = {neuralVoice:neuralVoice.value, natural:byId('speedModeSelect').value === 'natural', stretch:byId('speedModeSelect').value === '加速和减速',
       rate:+byId('rateSlider').value, pitch:+byId('pitchSlider').value, volume:+byId('volumeSlider').value};
-    if (settings.engine === 'neural') {
-      const cache=await caches.open('srt-neural-v1');
-      const files=Object.values(await neuralFiles(settings.neuralVoice));
-      const saved=await Promise.all(files.map(file=>cache.match(file.url)));
-      if(!saved.every(Boolean)) {
-        notice(installingVoice?'请等待音色下载完成。':'请先点击「下载并缓存音色」。');
-        neuralButton.focus();
-        return;
-      }
-    }
-    if (settings.engine === 'local' && !(await cachedEngine()).every(Boolean)) {
-      notice(downloading ? '引擎下载完成后即可配音。' : '请先下载并缓存本地引擎。');
-      downloadButton.focus();
+    const cache=await caches.open('srt-neural-v1');
+    const assets=Object.values(await neuralFiles(settings.neuralVoice));
+    const saved=await Promise.all(assets.map(file=>cache.match(file.url)));
+    if(!saved.every(Boolean)) {
+      notice(installingVoice?'请等待音色下载完成。':'请先点击「下载并缓存音色」。');
+      neuralButton.focus();
       return;
     }
     const batch = files.map(file => ({file, task:taskRow(file.name)}));

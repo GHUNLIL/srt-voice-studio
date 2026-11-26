@@ -1,6 +1,6 @@
 import './build.mjs';
 import {readFile,writeFile} from 'node:fs/promises';
-const files=['sub2api','speech','accounts','pay','pages'];
+const files=['accounts','pay','pages'];
 const sources=await Promise.all(files.map(name=>readFile(new URL('./'+name+'.mjs',import.meta.url),'utf8')));
 const bundle=sources.map((s,i)=>s.replace(/^import .*;$/gm,'').replace(/^export \{.*;$/gm,'').replace(/^export (?=async function)/gm,'')).join('\n');
 await writeFile(new URL('../public/_worker.js',import.meta.url),bundle

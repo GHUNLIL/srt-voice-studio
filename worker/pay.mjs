@@ -32,18 +32,18 @@ async function payCall(path,fields,secret) {
   return result;
 }
 async function settingsView(db){
-  return db.prepare('SELECT ratio,rate,mid,channel,COALESCE(m.pid,\'\') AS pid FROM settings s LEFT JOIN merchants m ON s.mid=m.id WHERE s.id=1').first();
+  return db.prepare('SELECT ratio,mid,channel,COALESCE(m.pid,\'\') AS pid FROM settings s LEFT JOIN merchants m ON s.mid=m.id WHERE s.id=1').first();
 }
 async function saveSettings(env,data) {
-  const db=env.DB, ratio=intField(data.ratio,0,1000000,'每元点数'),rate=intField(data.rate,0,1000000,'每段费率');
+  const db=env.DB, ratio=intField(data.ratio,0,1000000,'每元点数');
   if(!['alipay','stripe','usdt'].includes(data.channel)) problem(400,'渠道无效。');
   const cfg=await settingsView(db);
   const pid=String(data.pid||'').trim(),secret=String(data.secret||'').trim();
   if((pid!==cfg.pid&&!secret)||secret&&(!/^[a-zA-Z0-9_-]{1,64}$/.test(pid)||secret.length>512)) problem(400,'更换商户须同时填写 PID 和签名密钥。');
   if(secret){
     const encrypted=await encryptCredential(env,secret);
-    await db.batch([q(db,'INSERT INTO merchants(pid,secret) VALUES(?,?)',pid,encrypted),q(db,'UPDATE settings SET mid=(SELECT MAX(id) FROM merchants),ratio=?,rate=?,channel=? WHERE id=1',ratio,rate,data.channel)]);
-  }else await q(db,'UPDATE settings SET ratio=?,rate=?,channel=? WHERE id=1',ratio,rate,data.channel).run();
+    await db.batch([q(db,'INSERT INTO merchants(pid,secret) VALUES(?,?)',pid,encrypted),q(db,'UPDATE settings SET mid=(SELECT MAX(id) FROM merchants),ratio=?,channel=? WHERE id=1',ratio,data.channel)]);
+  }else await q(db,'UPDATE settings SET ratio=?,channel=? WHERE id=1',ratio,data.channel).run();
   return json({ok:true});
 }
 async function loadMerchant(env,id){

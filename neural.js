@@ -72,3 +72,20 @@ async function neuralSpeech(text,settings,signal) {
     neuralWorker.postMessage({text,voice:settings.neuralVoice,files,rate:settings.rate});
   });
 }
+
+const previewLines = {
+  ja:'朝の駅に、まもなく最初の電車が到着します。',
+  ko:'해가 뜨자 조용하던 시장이 조금씩 활기를 되찾습니다.',
+  'en-us':'The morning train rolls past the lake as the sun comes up.',
+  de:'Am frühen Morgen öffnet die kleine Bäckerei am Marktplatz.',
+  cmn:'天刚亮，街角的面包店已经飘出了香味。'
+};
+function currentExample() {
+  return {name:neuralVoice.selectedOptions[0].textContent,text:previewLines[neuralVoice.value]};
+}
+function updateVoice() {
+  byId('sampleText').textContent=currentExample().text;
+  showNeuralCache();
+}
+neuralVoice.addEventListener('change',updateVoice);
+updateVoice();

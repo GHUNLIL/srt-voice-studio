@@ -1,4 +1,3 @@
-import {sub2Speech} from "./sub2api.mjs";
 const textBytes = new TextEncoder();
 const hex = bytes => Array.from(new Uint8Array(bytes), b => b.toString(16).padStart(2,'0')).join('');
 const randomHex = size => hex(crypto.getRandomValues(new Uint8Array(size)));
@@ -11,7 +10,6 @@ async function verifier(password,salt) {
   return hex(await crypto.subtle.deriveBits({name:'PBKDF2',hash:'SHA-256',salt:textBytes.encode(salt),iterations:100000},key,256));
 }
 const schema=[
-  'CREATE TABLE IF NOT EXISTS azure_config(id INTEGER PRIMARY KEY, region TEXT NOT NULL, secret TEXT NOT NULL)',
   'CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY, name TEXT UNIQUE COLLATE NOCASE NOT NULL, salt TEXT NOT NULL, hash TEXT NOT NULL, admin INTEGER NOT NULL DEFAULT 0)',
   'CREATE TABLE IF NOT EXISTS sessions(token TEXT PRIMARY KEY, uid INTEGER NOT NULL, expires INTEGER NOT NULL)',
   'CREATE TABLE IF NOT EXISTS attempts(bucket TEXT PRIMARY KEY, n INTEGER NOT NULL, until INTEGER NOT NULL)',
@@ -64,15 +62,4 @@ async function login(db,request,data,register) {
 }
 const balanceSQL="(SELECT COALESCE(sum(points),0) FROM orders WHERE uid=? AND paid=1) - (SELECT COALESCE(sum(points),0) FROM charges WHERE uid=? AND (state='done' OR (state='held' AND created>unixepoch()-600)))";
 async function getBalance(db,uid){return (await q(db,'SELECT '+balanceSQL+' AS n',uid,uid).first()).n}
-async function billedSpeech(request,env,user) {
-  const db=env.DB, {rate}=await db.prepare('SELECT rate FROM settings WHERE id=1').first();
-  if(!rate || user.admin) return sub2Speech(request,env);
-  const id=crypto.randomUUID();
-  const hold=await q(db,"INSERT INTO charges(id,uid,points,state) SELECT ?,?,?,'held' WHERE "+balanceSQL+'>=?',id,user.id,rate,user.id,user.id,rate).run();
-  if(!hold.meta.changes) problem(402,'点数不足，请先充值。');
-  let ok=false;
-  try { const res=await sub2Speech(request,env); ok=res.ok;return res; }
-  finally {await q(db,"UPDATE charges SET state=CASE WHEN created>unixepoch()-600 THEN ? ELSE 'released' END WHERE id=?",ok?'done':'released',id).run();}
-}
-
-export {setupDB,sessionUser,login,json,problem,q,getBalance,billedSpeech,sessionToken,sha256,textBytes,hex};
+export {setupDB,sessionUser,login,json,problem,q,getBalance,sessionToken,sha256,textBytes,hex};

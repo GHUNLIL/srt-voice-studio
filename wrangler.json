@@ -11,16 +11,6 @@
     "binding": "ASSETS",
     "run_worker_first": true
   },
-  "ratelimits": [
-    {
-      "name": "SPEECH_LIMIT",
-      "namespace_id": "10401",
-      "simple": {
-        "limit": 20,
-        "period": 60
-      }
-    }
-  ],
   "d1_databases": [
     {
       "binding": "DB",
