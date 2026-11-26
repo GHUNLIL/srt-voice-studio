@@ -9,3 +9,7 @@
 管理员可在账户页配置 UnlilPay 商户、付款渠道和每元点数。本地神经配音免费。
 
 运行 `node worker/build-pages.mjs` 后把 `public/` 上传至 Cloudflare Pages，并绑定 D1。
+
+在线 TTS 使用 Amazon Polly 神经音色，由用户在独立的 Puter 登录窗授权并使用个人额度。连接页面托管在同一 Pages 项目的 unlil-srt.pages.dev，只允许 srtvoice.unlil.com 嵌入。切换在线引擎时才加载。
+
+要启用原版音色，在 Pages 生产环境设置 AZURE_SPEECH_REGION 和加密的 AZURE_SPEECH_KEY，再部署一次。请求使用站点的 Azure Speech 额度。

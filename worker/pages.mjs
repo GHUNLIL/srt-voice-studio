@@ -7,6 +7,7 @@ async function asset(request,env,path,user) {
   let res=await env.ASSETS.fetch(new Request(url,{headers,method:request.method==='HEAD'?'HEAD':'GET'}));
   if(path==='/' && user && request.method!=='HEAD'){
     res=new HTMLRewriter().on('html',{element(el){
+      if(env.AZURE_SPEECH_KEY && /^[a-z][a-z0-9]+$/.test(env.AZURE_SPEECH_REGION || '')) el.setAttribute('data-original-tts','1');
       el.setAttribute('data-history',user.admin?'local-srt-history':'srt-user-'+user.id);
     }}).transform(res);
   }
@@ -23,9 +24,30 @@ async function readObject(request) {
   return data;
 }
 
+async function originalSpeech(request,env) {
+  if(!env.AZURE_SPEECH_KEY || !/^[a-z][a-z0-9]+$/.test(env.AZURE_SPEECH_REGION || '')) problem(503,'站点尚未配置 Azure Speech。');
+  const {text,voice,rate}=await readObject(request);
+  const voices=['zh-CN-Xiaoxiao','zh-CN-Yunxi','ja-JP-Keita','ja-JP-Nanami','ko-KR-InJoon','ko-KR-SunHi','en-US-Guy','en-US-Jenny','de-DE-Killian','de-DE-Katja'];
+  if(typeof text!=='string' || !text.trim() || text.length>5000 || !voices.includes(voice) || !Number.isInteger(rate) || rate < -50 || rate > 100) problem(400,'字幕、语速或音色无效。');
+  const safe=text.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+  const response=await fetch('https://'+env.AZURE_SPEECH_REGION+'.tts.speech.microsoft.com/cognitiveservices/v1',{
+    method:'POST',redirect:'error',signal:AbortSignal.timeout(60000),
+    headers:{'Ocp-Apim-Subscription-Key':env.AZURE_SPEECH_KEY,'Content-Type':'application/ssml+xml','X-Microsoft-OutputFormat':'riff-24khz-16bit-mono-pcm'},
+    body:'<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="'+voice.slice(0,5)+'"><voice name="'+voice+'Neural"><prosody rate="'+(rate>=0?'+':'')+rate+'%">'+safe+'</prosody></voice></speak>'
+  });
+  if(!response.ok) problem(502,'Azure Speech 返回 HTTP '+response.status+'。');
+  return new Response(response.body,{headers:{'Content-Type':'audio/wav','Cache-Control':'no-store'}});
+}
+
 async function route(request,env){
   const url=new URL(request.url), path=url.pathname, db=env.DB;
   if(url.hostname==='srt.unlil.com') return new Response('此地址已停用。',{status:410});
+  if(path==='/polly-bridge' && url.hostname==='unlil-srt.pages.dev' && request.method==='GET'){
+    const res=await asset(request,env,path);
+    res.headers.delete('X-Frame-Options');
+    res.headers.set('Content-Security-Policy', "frame-ancestors https://srtvoice.unlil.com");
+    return res;
+  }
   const post=request.method==='POST';
   if(!post && !['GET','HEAD'].includes(request.method)) problem(405,'请求方法无效。');
   if(path==='/api/payment/notify') {await setupDB(db,env);return paymentNotify(request,env);}
@@ -39,6 +61,7 @@ async function route(request,env){
     if(path.startsWith('/api/')) problem(401,'请先登录。');
     return new Response(null,{status:302,headers:{Location:'/login','Cache-Control':'no-store'}});
   }
+  if(path==='/api/original-tts' && post) return originalSpeech(request,env);
   if(path==='/api/logout'&&post){
     await q(db,'DELETE FROM sessions WHERE token=?',await sha256(sessionToken(request))).run();
     return json({ok:true},200,{'Set-Cookie':'__Host-srtvoice=; Secure; HttpOnly; SameSite=Lax; Path=/; Max-Age=0'});

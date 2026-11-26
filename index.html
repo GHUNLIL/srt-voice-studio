@@ -7,9 +7,13 @@
 </head><body><main>
 <header><h1>SRT 字幕配音</h1><a href="/account">账户与充值</a></header>
 <div class="workspace">
-<section aria-labelledby="source"><h2 id="source">本地神经配音</h2>
+<section aria-labelledby="source"><h2 id="source">字幕配音</h2>
 <label for="srtFiles">字幕文件 <small>可多选 .srt</small></label>
 <input type="file" id="srtFiles" accept=".srt" multiple>
+<label for="engineSelect">配音引擎</label>
+<select id="engineSelect"><option value="local">本地神经配音</option><option value="polly">在线 TTS · Amazon Polly</option><option value="original" disabled>原版 TTS · 未配置 Azure</option></select>
+<div id="onlineFields" hidden><label for="onlineVoice">语言与音色</label><select id="onlineVoice"></select>
+<p id="engineNote"></p><div id="pollyLogin"></div></div>
 <div id="neuralFields"><label for="neuralVoice">语言与音色</label><select id="neuralVoice"><option value="cmn">普通话 · Huayan</option><option value="ja">日语 · CSS10</option><option value="en-us">英语 · Lessac</option><option value="ko">韩语 · KSS</option><option value="de">德语 · Thorsten</option></select><button type="button" id="neuralDownload">下载并缓存音色</button></div>
 <div class="voice-example"><button type="button" id="sampleBtn" onclick="startBatchConversion(true)">测试当前配音</button>
 <p id="sampleText"></p></div>
@@ -53,4 +57,4 @@
 <p id="notice" role="status" hidden></p>
 <section class="results" aria-labelledby="history"><div class="result-head"><h2 id="history">配音记录</h2><button onclick="clearFinishedTasks()">清理历史记录</button></div>
 <div id="taskList"></div><p class="empty">暂无配音记录</p></section>
-</main><script src="./studio.js"></script><script src="./neural.js"></script></body></html>
+</main><script src="./studio.js"></script><script src="./neural.js"></script><script src="./online.js"></script></body></html>

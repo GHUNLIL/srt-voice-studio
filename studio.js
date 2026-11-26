@@ -267,7 +267,7 @@ async function convert(file, task, settings) {
     for (const [i, cue] of cues.entries()) {
       task.status.className = 'status-loading';
       task.status.textContent = '正在配音 · ' + (i + 1) + ' / ' + cues.length;
-      const samples = await neuralSpeech(cue.text,settings,signal);
+      const samples = settings.engine === 'local' ? await neuralSpeech(cue.text,settings,signal) : await onlineSpeech(cue.text,settings,signal);
       signal.throwIfAborted();
       timeline.add(cue,samples,settings);
     }
@@ -288,7 +288,7 @@ async function startBatchConversion(example = false) {
   const input = byId('srtFiles');
   const files = Array.from(input.files);
   if (example) {
-    const {name,text} = currentExample();
+    const {name,text} = selectedExample();
     const filename = name.replace(/[^\p{L}\p{N} ._-]/gu,' ').replace(/\s+/g,' ').trim();
     files.splice(0,files.length,new File(['1\n00:00:00,000 --> 00:00:05,000\n'+text], '试听 '+filename+'.srt'));
   }
@@ -300,15 +300,18 @@ async function startBatchConversion(example = false) {
   notice('');
   try {
     await restored;
-    const settings = {neuralVoice:neuralVoice.value, natural:byId('speedModeSelect').value === 'natural', stretch:byId('speedModeSelect').value === '加速和减速',
+    const settings = {engine:engineSelect.value,voice:onlineVoice.value,neuralVoice:neuralVoice.value, natural:byId('speedModeSelect').value === 'natural', stretch:byId('speedModeSelect').value === '加速和减速',
       rate:+byId('rateSlider').value, pitch:+byId('pitchSlider').value, volume:+byId('volumeSlider').value};
-    const cache=await caches.open('srt-neural-v1');
-    const assets=Object.values(await neuralFiles(settings.neuralVoice));
-    const saved=await Promise.all(assets.map(file=>cache.match(file.url)));
-    if(!saved.every(Boolean)) {
-      notice(installingVoice?'请等待音色下载完成。':'请先点击「下载并缓存音色」。');
-      neuralButton.focus();
-      return;
+    if(settings.engine==='polly' && !pollyReady) throw new Error('请先连接自己的 Puter 账户。');
+    if(settings.engine==='local') {
+      const cache=await caches.open('srt-neural-v1');
+      const assets=Object.values(await neuralFiles(settings.neuralVoice));
+      const saved=await Promise.all(assets.map(file=>cache.match(file.url)));
+      if(!saved.every(Boolean)) {
+        notice(installingVoice?'请等待音色下载完成。':'请先点击「下载并缓存音色」。');
+        neuralButton.focus();
+        return;
+      }
     }
     const batch = files.map(file => ({file, task:taskRow(file.name)}));
     for (const [i, entry] of batch.entries()) {

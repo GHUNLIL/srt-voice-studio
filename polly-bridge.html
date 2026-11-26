@@ -1,0 +1,38 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>*{box-sizing:border-box}body{margin:0;font:14px system-ui;color:#111}button{background:#fff;border:1px solid #444;border-radius:0;padding:7px 10px;font:inherit;color:inherit}</style>
+</head><body><button type="button" id="connect" disabled>正在连接 Puter…</button>
+<script>
+const button=document.querySelector('button');
+const site='https://srtvoice.unlil.com';
+let port;
+function state(){
+  const ready=!!window.puter?.auth.isSignedIn();
+  button.disabled=ready;
+  button.textContent=ready?'已连接 Puter':'登录 Puter 使用在线音色';
+  port?.postMessage({ready});
+}
+button.onclick=async()=>{
+  try{await puter.auth.signIn();state();}
+  catch{button.disabled=false;button.textContent='重新连接 Puter';}
+};
+window.addEventListener('message',event=>{
+  if(event.origin!==site || event.source!==parent || event.data!=='connect' || !event.ports[0]) return;
+  port=event.ports[0];
+  port.onmessage=async({data})=>{
+    const {id,text,language,voice}=data;
+    let audio;
+    try{
+      if(!window.puter?.auth.isSignedIn())throw Error('请先登录 Puter。');
+      audio=await puter.ai.txt2speech(text,{provider:'aws-polly',engine:'neural',language,voice});
+      const result=await fetch(audio.src);
+      if(!result.ok)throw Error('音频读取失败。');
+      const bytes=await result.arrayBuffer();
+      port.postMessage({id,bytes},[bytes]);
+    }catch(e){port.postMessage({id,error:e?.message || e?.error?.message || '合成失败，请检查 Puter 连接和可用额度。'});}
+    finally{if(audio?.src?.startsWith('blob:'))URL.revokeObjectURL(audio.src);}
+  };
+  if(window.puter)state();
+});
+</script>
+<script src="https://js.puter.com/v2/" onload="state()" onerror="button.disabled=false;button.textContent='连接失败，点击重试';button.onclick=()=>location.reload()"></script>
+</body></html>
