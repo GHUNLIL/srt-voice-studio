@@ -6,7 +6,7 @@ const root = file => new URL('../' + file,import.meta.url);
 let page = await readFile(root('index.html'),'utf8');
 const styles = await readFile(root('studio.css'),'utf8');
 page = page.replace('<link rel="stylesheet" href="./studio.css">', () => '<style>'+styles+'</style>');
-for (const file of ['studio.js','cloud-speech.js']) {
+for (const file of ['studio.js','neural.js','cloud-speech.js']) {
   const script = await readFile(root(file),'utf8');
   page = page.replace('<script src="./'+file+'"></script>', () => '<script>'+script+'</script>');
 }

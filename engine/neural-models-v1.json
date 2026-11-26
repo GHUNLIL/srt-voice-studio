@@ -1,0 +1,101 @@
+{
+  "shared": {
+    "phoneJS": {
+      "url": "https://cdn.jsdelivr.net/npm/@diffusionstudio/piper-wasm@1.0.0/build/piper_phonemize.js",
+      "size": 120714,
+      "hash": "fef0c2fc442d24fdef5c7c7cc37d5da2314407640fe11ab1bfe347c723dff19b"
+    },
+    "phoneWasm": {
+      "url": "https://cdn.jsdelivr.net/npm/@diffusionstudio/piper-wasm@1.0.0/build/piper_phonemize.wasm",
+      "size": 635212,
+      "hash": "b777cd107a91d2bcc6a1ea46f2c26a662a7407394fe84589198aeaa83dd7a9d6"
+    },
+    "phoneData": {
+      "url": "https://cdn.jsdelivr.net/npm/@diffusionstudio/piper-wasm@1.0.0/build/piper_phonemize.data",
+      "size": 18077249,
+      "hash": "29f1025eb23a5b5c192cd14a6efbce4509402ff265405072ee6f7d1a09b78f8c"
+    },
+    "ortJS": {
+      "url": "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.18.0/dist/ort.wasm.min.js",
+      "size": 142930,
+      "hash": "90533a3fd7006df7f897c0d63c468996da5c8e430e39964d92ebe586c4996614"
+    },
+    "ortWasm": {
+      "url": "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.18.0/dist/ort-wasm-simd.wasm",
+      "size": 10595041,
+      "hash": "f533b5f21790563d7556c611c3835ac65848ee326da2689aac54ed7d9cc8c6a4"
+    }
+  },
+  "voices": {
+    "cmn": {
+      "model": {
+        "url": "https://huggingface.co/rhasspy/piper-voices/resolve/5ec43b186ef915a195d3ddbcfd9916e76c503c3f/zh/zh_CN/huayan/medium/zh_CN-huayan-medium.onnx",
+        "size": 63201294,
+        "hash": "9929917bf8cabb26fd528ea44d3a6699c11e87317a14765312420be230be0f3d"
+      },
+      "cfg": {
+        "url": "https://huggingface.co/rhasspy/piper-voices/resolve/5ec43b186ef915a195d3ddbcfd9916e76c503c3f/zh/zh_CN/huayan/medium/zh_CN-huayan-medium.onnx.json",
+        "size": 4822,
+        "hash": "d521dc45504a8ccc99e325822b35946dd701840bfb07e3dbb31a40929ed6a82b"
+      }
+    },
+    "en-us": {
+      "model": {
+        "url": "https://huggingface.co/rhasspy/piper-voices/resolve/5ec43b186ef915a195d3ddbcfd9916e76c503c3f/en/en_US/lessac/medium/en_US-lessac-medium.onnx",
+        "size": 63201294,
+        "hash": "5efe09e69902187827af646e1a6e9d269dee769f9877d17b16b1b46eeaaf019f"
+      },
+      "cfg": {
+        "url": "https://huggingface.co/rhasspy/piper-voices/resolve/5ec43b186ef915a195d3ddbcfd9916e76c503c3f/en/en_US/lessac/medium/en_US-lessac-medium.onnx.json",
+        "size": 4885,
+        "hash": "efe19c417bed055f2d69908248c6ba650fa135bc868b0e6abb3da181dab690a0"
+      }
+    },
+    "ko": {
+      "model": {
+        "url": "https://huggingface.co/rhasspy/piper-voices/resolve/5ec43b186ef915a195d3ddbcfd9916e76c503c3f/ko/ko_KR/kss/medium/ko_KR-kss-medium.onnx",
+        "size": 63221984,
+        "hash": "4c734a734ae97d708ef94f147ad920d92b625a8a195b2c045ab3064c29ee0281"
+      },
+      "cfg": {
+        "url": "https://huggingface.co/rhasspy/piper-voices/resolve/5ec43b186ef915a195d3ddbcfd9916e76c503c3f/ko/ko_KR/kss/medium/ko_KR-kss-medium.onnx.json",
+        "size": 6222,
+        "hash": "e48e17b31111ab49e1f2f22cd93954fb0cfdd22a5df338673ef776fd4d4d6508"
+      }
+    },
+    "de": {
+      "model": {
+        "url": "https://huggingface.co/rhasspy/piper-voices/resolve/5ec43b186ef915a195d3ddbcfd9916e76c503c3f/de/de_DE/thorsten/medium/de_DE-thorsten-medium.onnx",
+        "size": 63221984,
+        "hash": "fd270eb3d1ebf91d763f8a0f949b1b1bebdfefaea18c3aaf8577dd34536e064f"
+      },
+      "cfg": {
+        "url": "https://huggingface.co/rhasspy/piper-voices/resolve/5ec43b186ef915a195d3ddbcfd9916e76c503c3f/de/de_DE/thorsten/medium/de_DE-thorsten-medium.onnx.json",
+        "size": 6455,
+        "hash": "e5bb7410dcbbcc0be6f4544f6bc66612b315ab5cb3099ec44bb46d860bc7cca9"
+      }
+    },
+    "ja": {
+      "model": {
+        "url": "https://huggingface.co/ayousanz/piper-plus-css10-ja-6lang/resolve/bd0d812d4db9182ecdb907ef074becf9e230c17f/css10-ja-6lang-fp16.onnx",
+        "size": 39652717,
+        "hash": "5ebc51dbf897238523f3df0d6e0f6c93033bc5cda3f8602a8379ebe2a4738c42"
+      },
+      "cfg": {
+        "url": "https://huggingface.co/ayousanz/piper-plus-css10-ja-6lang/resolve/bd0d812d4db9182ecdb907ef074becf9e230c17f/config.json",
+        "size": 5912,
+        "hash": "3c613dacf139349c20159433559b2e94e6364e9a340d95245f3de6006f453fcc"
+      },
+      "jaJS": {
+        "url": "https://unpkg.com/piper-plus@0.9.1/dist/rust-wasm/piper_plus_wasm.js",
+        "size": 23225,
+        "hash": "48b86d402a11acba5a357649051224cce669495ea7f021381d468132202c8bad"
+      },
+      "jaWasm": {
+        "url": "https://unpkg.com/piper-plus@0.9.1/dist/rust-wasm/piper_plus_wasm_bg.wasm",
+        "size": 60130163,
+        "hash": "d9454973ccd4e8e3ffe69faad4b4aa04331c94e8e0f6541904fd5e9d914494e6"
+      }
+    }
+  }
+}

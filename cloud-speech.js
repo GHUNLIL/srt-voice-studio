@@ -64,6 +64,7 @@ const previewLines = {
 function currentExample() {
   const mode = engine.value;
   const title = engine.selectedOptions[0].textContent;
+  if (mode === 'neural') return {name:neuralVoice.selectedOptions[0].textContent,text:previewLines[neuralVoice.value]};
   if (mode === 'sub2api' || mode === 'compatible') {
     const chat = mode === 'sub2api';
     const model = selectedSetting(chat ? 'sub2Model' : 'speechModel');
@@ -78,8 +79,11 @@ function showExample() {
   byId('sampleText').textContent = currentExample().text;
 }
 voiceList.addEventListener('change',showExample);
+neuralVoice.addEventListener('change',()=>{showNeuralCache();showExample();});
 function updateProvider() {
   const mode = engine.value;
+  byId('neuralFields').hidden = mode !== 'neural';
+  if(mode === 'neural') showNeuralCache();
   byId('localFields').hidden = mode !== 'local';
   byId('useLocal').hidden = mode !== 'sub2api';
   if (mode === 'local') {
@@ -90,7 +94,7 @@ function updateProvider() {
   byId('azureFields').hidden = mode !== 'azure-key';
   byId('customFields').hidden = mode !== 'compatible';
   byId('sub2Fields').hidden = mode !== 'sub2api';
-  voiceList.hidden = mode === 'compatible' || mode === 'sub2api';
+  voiceList.hidden = mode === 'neural' || mode === 'compatible' || mode === 'sub2api';
   document.querySelector('label[for="voiceSelect"]').hidden = voiceList.hidden;
   for (const [i, option] of Array.from(voiceList.options).entries()) {
     const name = microsoftVoices.get(option.value).split('-')[2].replace('Neural','');
@@ -99,6 +103,7 @@ function updateProvider() {
   }
   if (voiceList.selectedOptions[0]?.hidden) voiceList.selectedIndex = 0;
   const notes = {
+    neural:'首次手动缓存所选语言，之后在本机生成 WAV。',
     local:'字幕和配音均在浏览器内处理。',
     azure:sharedSpeechReady === false ? '站点尚未开通微软语音。管理员可在「账户与充值」配置 Azure Speech。' : '由微软合成，含原版日、韩、英、德音色和中文晓晓、云希。',
     'azure-key':'每段字幕和密钥直接发送给微软。密钥仅用于本页，刷新后需重新填写。',
@@ -110,7 +115,7 @@ function updateProvider() {
   showExample();
 }
 function selectLocalSpeech() {
-  engine.value = 'local';
+  engine.value = 'neural';
   updateProvider();
   engine.focus();
 }
@@ -142,10 +147,12 @@ function providerSettings() {
     if (!model || !voiceId || !key) throw new Error('请填写模型名称、音色 ID 和接口密钥。');
     return {engine:mode,url:url.href,model,voiceId,key};
   }
+  if(mode==='neural') return {engine:mode,neuralVoice:neuralVoice.value};
   return {engine:mode};
 }
 
 async function providerSamples(text, settings, signal, report) {
+  if (settings.engine === 'neural') return neuralSpeech(text,settings,signal);
   if (settings.engine === 'azure') return readSpeech(await azureSpeech(text,settings,signal,report));
   const microsoft = settings.engine === 'azure-key';
   let headers, body;

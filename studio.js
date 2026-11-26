@@ -430,6 +430,16 @@ async function startBatchConversion(example = false) {
     await restored;
     const settings = {...providerSettings(), voice:byId('voiceSelect').value, natural:byId('speedModeSelect').value === 'natural', stretch:byId('speedModeSelect').value === '加速和减速',
       rate:+byId('rateSlider').value, pitch:+byId('pitchSlider').value, volume:+byId('volumeSlider').value};
+    if (settings.engine === 'neural') {
+      const cache=await caches.open('srt-neural-v1');
+      const files=Object.values(await neuralFiles(settings.neuralVoice));
+      const saved=await Promise.all(files.map(file=>cache.match(file.url)));
+      if(!saved.every(Boolean)) {
+        notice(installingVoice?'请等待音色下载完成。':'请先点击「下载并缓存音色」。');
+        neuralButton.focus();
+        return;
+      }
+    }
     if (settings.engine === 'local' && !(await cachedEngine()).every(Boolean)) {
       notice(downloading ? '引擎下载完成后即可配音。' : '请先下载并缓存本地引擎。');
       downloadButton.focus();
