@@ -6,7 +6,9 @@ const microsoftVoices = new Map([
   ['en-us+m3','en-US-GuyNeural'], ['en-us+f3','en-US-JennyNeural'],
   ['de+m3','de-DE-KillianNeural'], ['de+f3','de-DE-KatjaNeural']
 ]);
-let speechOrigin;
+let speechOrigin = location.origin;
+let sharedSpeechReady;
+
 const engine = document.getElementById('engineSelect');
 const voiceList = document.getElementById('voiceSelect');
 const originalNames = Array.from(voiceList.options, option => option.textContent);
@@ -92,13 +94,13 @@ function updateProvider() {
   document.querySelector('label[for="voiceSelect"]').hidden = voiceList.hidden;
   for (const [i, option] of Array.from(voiceList.options).entries()) {
     const name = microsoftVoices.get(option.value).split('-')[2].replace('Neural','');
-    option.hidden = mode === 'azure' && option.value.startsWith('cmn');
+    option.hidden = false;
     option.textContent = microsoft ? originalNames[i] + ' · ' + name : originalNames[i];
   }
   if (voiceList.selectedOptions[0]?.hidden) voiceList.selectedIndex = 0;
   const notes = {
     local:'字幕和配音均在浏览器内处理。',
-    azure:'字幕正文将通过站点后端发送至微软合成。',
+    azure:sharedSpeechReady === false ? '站点尚未开通微软语音。管理员可在「账户与充值」配置 Azure Speech。' : '由微软合成，含原版日、韩、英、德音色和中文晓晓、云希。',
     'azure-key':'每段字幕和密钥直接发送给微软。密钥仅用于本页，刷新后需重新填写。',
     sub2api:'字幕将通过本站发送至 sub2api.unlil.com，使用站点配额。模型可用性取决于站点分组。',
     compatible:'每段字幕和密钥将直接发送到下方地址。请填写你信任且支持浏览器跨域请求的语音接口，费用计入该密钥所属账户。'
@@ -200,7 +202,9 @@ async function discoverCloudSpeech() {
     const response = await fetch(origin + '/api/status', {signal:AbortSignal.timeout(6000)});
     if (!response.ok) return;
     const data = await response.json();
-    if (data.service !== 'azure-srt' || !data.configured) return;
+    if (data.service !== 'azure-srt') return;
+    sharedSpeechReady = data.configured;
+    if (engine.value === 'azure') updateProvider();
     speechOrigin = origin;
     const shared = engine.querySelector('option[value="azure"]');
     shared.hidden = false;
@@ -232,4 +236,4 @@ async function azureSpeech(text, settings, signal, report) {
     await waitForThrottle(Math.max(seconds,1)*1000,signal);
   }
 }
-engine.addEventListener('focus', discoverCloudSpeech, {once:true});
+engine.addEventListener('change', () => { if (engine.value === 'azure') discoverCloudSpeech(); });

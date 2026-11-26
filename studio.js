@@ -215,10 +215,12 @@ function fitDuration(source, length) {
 }
 
 class WaveTimeline {
-  constructor() { this.pages = new Map(); this.length = 0; }
+  constructor() { this.pages = new Map(); this.length = 0; this.speechEnd = 0; }
   add(cue, source, settings) {
     const duration = cue.end - cue.start;
-    const length = settings.stretch ? duration : Math.min(duration, source.length);
+    const start = settings.natural ? Math.max(cue.start,this.speechEnd) : cue.start;
+    const length = settings.natural ? source.length : settings.stretch ? duration : Math.min(duration, source.length);
+    if (start + length > SAMPLE_RATE * 3600 * 6) throw new Error('自然语速配音超过 6 小时，请拆分字幕。');
     if (settings.pitch) {
       const base = basePitch(source);
       source = resample(source, Math.max(0.35, (base + settings.pitch) / base));
@@ -226,7 +228,7 @@ class WaveTimeline {
     const clip = fitDuration(source, length);
     const gain = 1 + settings.volume / 100;
     for (let i = 0; i < length;) {
-      const time = cue.start + i;
+      const time = start + i;
       const index = Math.floor(time / SAMPLE_RATE);
       const offset = time % SAMPLE_RATE;
       if (!this.pages.has(index)) this.pages.set(index, new Int16Array(SAMPLE_RATE));
@@ -237,7 +239,8 @@ class WaveTimeline {
       }
       i += count;
     }
-    this.length = Math.max(this.length, cue.end);
+    this.speechEnd = start + length;
+    this.length = Math.max(this.length, cue.end, this.speechEnd);
   }
   wav() {
     const header = new ArrayBuffer(44);
@@ -425,7 +428,7 @@ async function startBatchConversion(example = false) {
   notice('');
   try {
     await restored;
-    const settings = {...providerSettings(), voice:byId('voiceSelect').value, stretch:byId('speedModeSelect').selectedIndex === 1,
+    const settings = {...providerSettings(), voice:byId('voiceSelect').value, natural:byId('speedModeSelect').value === 'natural', stretch:byId('speedModeSelect').value === '加速和减速',
       rate:+byId('rateSlider').value, pitch:+byId('pitchSlider').value, volume:+byId('volumeSlider').value};
     if (settings.engine === 'local' && !(await cachedEngine()).every(Boolean)) {
       notice(downloading ? '引擎下载完成后即可配音。' : '请先下载并缓存本地引擎。');

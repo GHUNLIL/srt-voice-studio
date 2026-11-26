@@ -11,7 +11,7 @@
 <label for="srtFiles">字幕文件 <small>可多选 .srt</small></label>
 <input type="file" id="srtFiles" accept=".srt" multiple>
 <label for="engineSelect">配音引擎</label>
-<select id="engineSelect"><option value="local">浏览器本地语音</option><option value="azure-key">微软 Azure Speech · 自填密钥</option><option value="sub2api" selected>ChatGPT/OpenAI</option><option value="compatible">兼容语音接口 · 自选模型</option><option value="azure" disabled hidden>微软 Azure Speech · 站点提供</option></select>
+<select id="engineSelect"><option value="local">浏览器本地语音</option><option value="azure-key">微软 Azure Speech · 自填密钥</option><option value="sub2api" selected>ChatGPT/OpenAI</option><option value="compatible">兼容语音接口 · 自选模型</option><option value="azure">微软 Neural · 原版音色</option></select>
             <p id="engineNote"></p>
 <button type="button" id="useLocal">切换到免费本地配音</button>
 <div id="localFields" hidden><button type="button" id="downloadEngine">下载并缓存引擎（9.3 MB）</button></div>
@@ -48,7 +48,7 @@
 <div class="voice-example"><button type="button" id="sampleBtn" onclick="startBatchConversion(true)">测试当前配音</button>
 <p id="sampleText"></p></div>
 <label for="speedModeSelect">时间轴对齐</label>
-<select id="speedModeSelect"><option value="仅加速">仅压缩超时语音</option><option value="加速和减速">拉伸或压缩至字幕时长</option></select>
+<select id="speedModeSelect"><option value="natural" selected>自然语速（超时顺延）</option><option value="仅加速">仅压缩超时语音</option><option value="加速和减速">拉伸或压缩至字幕时长</option></select>
 </section>
 <section aria-labelledby="settings"><h2 id="settings">声音设置</h2>
 <fieldset><legend>情绪与题材预设</legend>

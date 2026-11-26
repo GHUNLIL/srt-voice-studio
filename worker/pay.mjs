@@ -5,7 +5,7 @@ function intField(value,min,max,label) {
   if(!Number.isSafeInteger(value)||value<min||value>max) problem(400,label+'超出允许范围。');
   return value;
 }
-async function merchantCrypt(env,data,decrypt=false) {
+async function encryptCredential(env,data,decrypt=false) {
   const material=env.PAY_WRAPPING_KEY || '__PAY_WRAPPING_KEY__';
   if(!/^[a-f0-9]{64}$/.test(material)) problem(503,'商户密钥加密配置缺失。');
   const key=await crypto.subtle.importKey('raw',Uint8Array.from(material.match(/../g),v=>parseInt(v,16)),'AES-GCM',false,['encrypt','decrypt']);
@@ -41,7 +41,7 @@ async function saveSettings(env,data) {
   const pid=String(data.pid||'').trim(),secret=String(data.secret||'').trim();
   if((pid!==cfg.pid&&!secret)||secret&&(!/^[a-zA-Z0-9_-]{1,64}$/.test(pid)||secret.length>512)) problem(400,'更换商户须同时填写 PID 和签名密钥。');
   if(secret){
-    const encrypted=await merchantCrypt(env,secret);
+    const encrypted=await encryptCredential(env,secret);
     await db.batch([q(db,'INSERT INTO merchants(pid,secret) VALUES(?,?)',pid,encrypted),q(db,'UPDATE settings SET mid=(SELECT MAX(id) FROM merchants),ratio=?,rate=?,channel=? WHERE id=1',ratio,rate,data.channel)]);
   }else await q(db,'UPDATE settings SET ratio=?,rate=?,channel=? WHERE id=1',ratio,rate,data.channel).run();
   return json({ok:true});
@@ -49,7 +49,7 @@ async function saveSettings(env,data) {
 async function loadMerchant(env,id){
   const row=await q(env.DB,'SELECT * FROM merchants WHERE id=?',id).first();
   if(!row) problem(503,'管理员尚未配置支付商户。');
-  return {pid:row.pid,secret:await merchantCrypt(env,row.secret,true)};
+  return {pid:row.pid,secret:await encryptCredential(env,row.secret,true)};
 }
 async function createRecharge(env,user,data) {
   const cfg=await settingsView(env.DB),yuan=intField(data.yuan,1,10000,'充值金额');
@@ -82,4 +82,4 @@ async function paymentNotify(request,env) {
   return new Response('success');
 }
 
-export {settingsView,saveSettings,createRecharge,settleOrder,loadMerchant,paymentNotify};
+export {encryptCredential,settingsView,saveSettings,createRecharge,settleOrder,loadMerchant,paymentNotify};

@@ -1,4 +1,4 @@
-import {azureSpeech} from './speech.mjs';
+import {azureSpeech,saveAzure} from './speech.mjs';
 import {setupDB,sessionUser,login,json,problem,q,getBalance,billedSpeech,sessionToken,sha256} from './accounts.mjs';
 import {settingsView,saveSettings,createRecharge,settleOrder,loadMerchant,paymentNotify} from './pay.mjs';
 
@@ -50,6 +50,10 @@ async function route(request,env){
     const cfg=await settingsView(db);
     const {results:orders}=await q(db,'SELECT id,cents,points,paid,created FROM orders WHERE uid=? ORDER BY created DESC,rowid DESC LIMIT 30',user.id).all();
     return json({name:user.name,admin:!!user.admin,balance:await getBalance(db,user.id),ratio:cfg.ratio,rate:cfg.rate,enabled:!!(cfg.ratio&&cfg.mid),channel:cfg.channel,orders,...(user.admin?{pid:cfg.pid}:{})});
+  }
+  if(path==='/api/admin/azure' && post) {
+    if(!user.admin) problem(403,'需要管理员权限。');
+    return saveAzure(env,await readObject(request));
   }
   if(path==='/api/admin/settings'&&post){
     if(!user.admin) problem(403,'需要管理员权限。');

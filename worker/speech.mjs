@@ -1,6 +1,29 @@
+import {q,json,problem} from './accounts.mjs';
+import {encryptCredential} from './pay.mjs';
+
+async function azureConfig(env) {
+  const row=await env.DB.prepare('SELECT region,secret FROM azure_config WHERE id=1').first();
+  if(row) return {region:row.region,key:await encryptCredential(env,row.secret,true)};
+  return {region:(env.AZURE_SPEECH_REGION || '').trim().toLowerCase(),key:(env.AZURE_SPEECH_KEY || '').trim()};
+}
+
+export async function saveAzure(env,data) {
+  const region = String(data.region || '').trim().toLowerCase();
+  const key = String(data.key || '').trim();
+  if (!/^[a-z][a-z0-9]{1,40}$/.test(region) || !/^[!-~]{8,256}$/.test(key)) problem(400,'请填写有效的 Azure Speech 区域和密钥。');
+  const response=await fetch('https://'+region+'.tts.speech.microsoft.com/cognitiveservices/voices/list',{
+    headers:{'Ocp-Apim-Subscription-Key':key},redirect:'manual',signal:AbortSignal.timeout(12000)
+  });
+  if(!response.ok) { await response.body?.cancel(); problem(400,'微软未接受此区域和密钥，请核对 Speech 资源。'); }
+  const catalog=await response.json();
+  if(!Array.isArray(catalog) || !catalog.some(v=>voices.has(v.ShortName))) problem(400,'此区域没有本页支持的微软音色。');
+  await q(env.DB,'INSERT OR REPLACE INTO azure_config(id,region,secret) VALUES(1,?,?)',region,await encryptCredential(env,key)).run();
+  return json({ok:true});
+}
+
 const voices = new Set([
   'ja-JP-KeitaNeural', 'ja-JP-NanamiNeural', 'ko-KR-InJoonNeural', 'ko-KR-SunHiNeural',
-  'en-US-GuyNeural', 'en-US-JennyNeural', 'de-DE-KillianNeural', 'de-DE-KatjaNeural'
+  'zh-CN-XiaoxiaoNeural', 'zh-CN-YunxiNeural', 'en-US-GuyNeural', 'en-US-JennyNeural', 'de-DE-KillianNeural', 'de-DE-KatjaNeural'
 ]);
 
 function escapeXml(text) {
@@ -11,8 +34,8 @@ export async function azureSpeech(request,env) {
     const url=new URL(request.url);
     const headers={'Cache-Control':'no-store'};
     const fail=(status,error)=>Response.json({error},{status,headers});
-    const region = (env.AZURE_SPEECH_REGION || '').trim().toLowerCase();
-    const ready = Boolean(/^[a-z][a-z0-9]{1,40}$/.test(region) && env.AZURE_SPEECH_KEY?.trim());
+    const {region,key} = await azureConfig(env);
+    const ready = Boolean(/^[a-z][a-z0-9]{1,40}$/.test(region) && key);
     if (url.pathname === '/api/status' && request.method === 'GET')
       return Response.json({service:'azure-srt', configured:ready}, {headers});
     if (url.pathname !== '/api/speech') return fail(404, '未知接口。');
@@ -40,7 +63,7 @@ export async function azureSpeech(request,env) {
     try {
       const speech = await fetch('https://' + region + '.tts.speech.microsoft.com/cognitiveservices/v1', {
         method:'POST', redirect:'manual', signal:request.signal, headers:{
-          'Ocp-Apim-Subscription-Key':env.AZURE_SPEECH_KEY.trim(), 'Content-Type':'application/ssml+xml',
+          'Ocp-Apim-Subscription-Key':key, 'Content-Type':'application/ssml+xml',
           'X-Microsoft-OutputFormat':'riff-22050hz-16bit-mono-pcm', 'User-Agent':'SrtVoiceStudio'
         }, body:ssml
       });

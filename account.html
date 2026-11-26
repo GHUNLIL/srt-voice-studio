@@ -2,7 +2,7 @@
 <header><h1>账户与充值</h1><nav><a href="/">返回配音</a><button id="logout">退出登录</button></nav></header>
 <section><div id="identity"></div><strong id="balance"></strong><p id="billing"></p><form id="topup" hidden><label>充值金额（元）<input id="amount" type="number" min="1" max="10000" step="1" value="1" required></label><p id="quote"></p><button>前往 UnlilPay 付款</button></form></section>
 <p id="msg" role="status"></p><section><h2>充值记录</h2><ul id="orders"></ul></section>
-<section id="adminbox" hidden><h2>管理员设置</h2><form id="config"><label>每充值 1 元到账点数<input id="ratio" type="number" min="0" max="1000000" required></label><label>ChatGPT/OpenAI 每成功合成一段扣点（0 为免费）<input id="rate" type="number" min="0" max="1000000" required></label><label>UnlilPay 商户 PID<input id="pid" maxlength="64"></label><label>商户签名密钥<input id="secret" type="password" autocomplete="new-password" placeholder="留空沿用已保存密钥"></label><label>付款渠道<select id="channel"><option value="alipay">支付宝</option><option value="stripe">Stripe</option><option value="usdt">USDT</option></select></label><button>保存设置</button></form></section>
+<section id="adminbox" hidden><h2>管理员设置</h2><form id="azureConfig"><h2>微软 Neural 配音</h2><p id="azureState"></p><label>Speech 资源所在区域<input id="speechRegion" placeholder="例如 eastasia" required></label><label>Speech 资源密钥<input id="speechKey" type="password" autocomplete="new-password" required></label><button>验证并启用微软配音</button></form><h2>点数与支付</h2><form id="config"><label>每充值 1 元到账点数<input id="ratio" type="number" min="0" max="1000000" required></label><label>ChatGPT/OpenAI 每成功合成一段扣点（0 为免费）<input id="rate" type="number" min="0" max="1000000" required></label><label>UnlilPay 商户 PID<input id="pid" maxlength="64"></label><label>商户签名密钥<input id="secret" type="password" autocomplete="new-password" placeholder="留空沿用已保存密钥"></label><label>付款渠道<select id="channel"><option value="alipay">支付宝</option><option value="stripe">Stripe</option><option value="usdt">USDT</option></select></label><button>保存设置</button></form></section>
 <script>
 const el=id=>document.getElementById(id);let account;
 async function api(path,data){
@@ -15,12 +15,14 @@ function quote(){el('quote').textContent='预计到账 '+(Number(el('amount').va
 async function refresh(){
  account=await api('me');el('identity').textContent=account.name+(account.admin?' · 管理员':'');el('balance').textContent=account.balance+' 点';
  el('billing').textContent=(account.enabled?'每元 '+account.ratio+' 点。':'充值尚未开放。')+' ChatGPT/OpenAI 每段 '+account.rate+' 点。';el('topup').hidden=!account.enabled;quote();
- el('adminbox').hidden=!account.admin;if(account.admin){for(const f of ['ratio','rate','pid','channel'])el(f).value=account[f];}
+ el('adminbox').hidden=!account.admin;if(account.admin){for(const f of ['ratio','rate','pid','channel'])el(f).value=account[f];await azureState();}
  el('orders').replaceChildren();if(!account.orders.length)el('orders').textContent='暂无充值记录';
  for(const o of account.orders){const li=document.createElement('li');li.textContent=new Date(o.created*1000).toLocaleString()+' · ¥'+(o.cents/100).toFixed(2)+' · '+o.points+' 点 · '+(o.paid?'已到账':'待支付')+' ';
  if(!o.paid){const b=document.createElement('button');b.textContent='查询到账';b.onclick=()=>action(b,async()=>{const r=await api('order/check',{id:o.id});await refresh();el('msg').textContent=r.paid?'已到账':'尚未支付';});li.append(b);}
  el('orders').append(li);}
 }
+async function azureState(){const s=await api('status');el('azureState').textContent=s.configured?'站点已配置微软语音。':'站点尚未开通微软语音。';}
+el('azureConfig').onsubmit=e=>{e.preventDefault();action(e.submitter,async()=>{await api('admin/azure',{region:el('speechRegion').value,key:el('speechKey').value});el('speechKey').value='';await azureState();el('msg').textContent='微软已验证，站点配音已启用。';});};
 el('amount').oninput=quote;
 el('logout').onclick=e=>action(e.target,async()=>{await api('logout',{});location.replace('/login');});
 el('topup').onsubmit=e=>{e.preventDefault();action(e.submitter,async()=>{const d=await api('recharge',{yuan:Number(el('amount').value)});location.assign(d.url);});};

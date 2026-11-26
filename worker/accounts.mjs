@@ -11,6 +11,7 @@ async function verifier(password,salt) {
   return hex(await crypto.subtle.deriveBits({name:'PBKDF2',hash:'SHA-256',salt:textBytes.encode(salt),iterations:100000},key,256));
 }
 const schema=[
+  'CREATE TABLE IF NOT EXISTS azure_config(id INTEGER PRIMARY KEY, region TEXT NOT NULL, secret TEXT NOT NULL)',
   'CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY, name TEXT UNIQUE COLLATE NOCASE NOT NULL, salt TEXT NOT NULL, hash TEXT NOT NULL, admin INTEGER NOT NULL DEFAULT 0)',
   'CREATE TABLE IF NOT EXISTS sessions(token TEXT PRIMARY KEY, uid INTEGER NOT NULL, expires INTEGER NOT NULL)',
   'CREATE TABLE IF NOT EXISTS attempts(bucket TEXT PRIMARY KEY, n INTEGER NOT NULL, until INTEGER NOT NULL)',
