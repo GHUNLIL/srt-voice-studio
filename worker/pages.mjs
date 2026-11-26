@@ -61,7 +61,7 @@ async function route(request,env){
   }
   if(path==='/account'&&!post) return asset(request,env,'/account');
   if(!post && (path==='/'||path==='/index.html')) return asset(request,env,'/',user);
-  if(!post && ['/engine/neural-models-v1.json','/engine/neural-worker-v1.js'].includes(path)) return asset(request,env,path);
+  if(!post && (/^\/engine\/parts\/[a-f0-9]{64}\.bin$/.test(path) || ['/engine/neural-models-v1.json','/engine/neural-models-v2.json','/engine/neural-worker-v1.js'].includes(path))) return asset(request,env,path);
   problem(404,'页面不存在。');
 }
 export default {async fetch(request,env){

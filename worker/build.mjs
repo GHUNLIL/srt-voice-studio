@@ -17,3 +17,4 @@ await cp(root('engine'),new URL('engine/',dest),{recursive:true});
 
 
 for(const page of ['login.html','account.html']) await copyFile(root(page),new URL(page,dest));
+await import('./build-models.mjs');
